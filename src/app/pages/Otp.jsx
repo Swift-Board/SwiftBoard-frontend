@@ -91,77 +91,75 @@ const Otp = () => {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      <div className="flex justify-evenly items-center w-full gap-8 p-4">
-        {/* Left Illustration */}
-        <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
-          <Image
-            src="/login.svg"
-            alt="OTP Illustration"
-            width={100}
-            height={100}
-            blurDataURL="data:..."
-            placeholder="blur"
-            className="w-[70%]"
-          />
-        </div>
+    <div className="flex justify-evenly items-center w-full gap-8 p-4">
+      {/* Left Illustration */}
+      <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
+        <Image
+          src="/login.svg"
+          alt="OTP Illustration"
+          width={100}
+          height={100}
+          blurDataURL="data:..."
+          placeholder="blur"
+          className="w-[70%]"
+        />
+      </div>
 
-        {/* Right Form */}
-        <div className="flex flex-col items-center justify-center w-full h-screen inset-0 fixed p-8 overflow-hidden">
-          <h2 className="text-3xl font-bold text-center mb-6">Verify OTP</h2>
-          <p className="text-gray-600 text-center mb-8">
-            Enter the 6-digit code sent to your email at ****@gmail.com
-          </p>
+      {/* Right Form */}
+      <div className="flex flex-col items-center justify-center w-full h-screen inset-0 fixed p-8 overflow-hidden">
+        <h2 className="text-3xl font-bold text-center mb-6">Verify OTP</h2>
+        <p className="text-gray-600 text-center mb-8">
+          Enter the 6-digit code sent to your email at ****@gmail.com
+        </p>
 
-          <form
-            onSubmit={handleSubmit}
-            onPaste={handlePaste}
-            className="w-full space-y-6"
-          >
-            <div className="flex justify-between gap-3">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="\d*"
-                  maxLength="1"
-                  ref={(el) => (inputsRef.current[index] = el)}
-                  value={otp[index]}
-                  onChange={(e) => handleChange(e.target, index)}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="w-12 h-14 text-2xl text-center border border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-all"
-                  autoComplete="one-time-code"
-                />
-              ))}
-            </div>
+        <form
+          onSubmit={handleSubmit}
+          onPaste={handlePaste}
+          className="w-full space-y-6"
+        >
+          <div className="flex justify-between gap-3">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                type="text"
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength="1"
+                ref={(el) => (inputsRef.current[index] = el)}
+                value={otp[index]}
+                onChange={(e) => handleChange(e.target, index)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                className="w-12 h-14 text-2xl text-center border border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-all"
+                autoComplete="one-time-code"
+              />
+            ))}
+          </div>
 
-            <button
-              type="submit"
-              disabled={!isOtpComplete}
-              className={`w-full py-3 rounded-lg font-semibold transition
+          <button
+            type="submit"
+            disabled={!isOtpComplete}
+            className={`w-full py-3 rounded-lg font-semibold transition
               ${
                 isOtpComplete
                   ? "bg-[#FF4B5C] text-white hover:bg-[#e43f50]"
                   : "bg-gray-300 text-gray-600 cursor-not-allowed"
               }`}
-            >
-              Verify OTP
-            </button>
-          </form>
+          >
+            Verify OTP
+          </button>
+        </form>
 
-          <div className="mt-4 text-center">
-            {canResend ? (
-              <button
-                onClick={handleResend}
-                className="text-blue-600 hover:underline font-semibold"
-              >
-                Resend OTP
-              </button>
-            ) : (
-              <p className="text-gray-500">Resend OTP in {timer} seconds</p>
-            )}
-          </div>
+        <div className="mt-4 text-center">
+          {canResend ? (
+            <button
+              onClick={handleResend}
+              className="text-blue-600 hover:underline font-semibold"
+            >
+              Resend OTP
+            </button>
+          ) : (
+            <p className="text-gray-500">Resend OTP in {timer} seconds</p>
+          )}
         </div>
       </div>
     </div>
