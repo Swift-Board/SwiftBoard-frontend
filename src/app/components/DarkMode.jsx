@@ -6,12 +6,15 @@ import { useTheme } from "../contexts/ThemeContext";
 const DarkMode = () => {
   const { theme, toggleTheme } = useTheme();
 
+  // Show nothing until theme is known
+  if (!theme) return null;
+
   return (
     <div className="flex items-center justify-center mt-8">
       <label className="switch">
         <input
           type="checkbox"
-          checked={theme === "light"}
+          checked={theme === "dark"}
           onChange={toggleTheme}
           className="sr-only peer"
         />

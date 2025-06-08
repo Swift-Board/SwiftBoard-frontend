@@ -5,22 +5,21 @@ import useLocalStorage from "use-local-storage";
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useLocalStorage("theme", "light");
+  // Delay matching until after mount
+  const [theme, setTheme] = useLocalStorage("theme", null); // null = unset
 
-  // Set default theme based on system preference
   useEffect(() => {
-    const prefersDark =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    setTheme((current) => current || (prefersDark ? "dark" : "light"));
-  }, []);
+    if (theme === null) {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(prefersDark ? "dark" : "light");
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("exit");
-    } else {
+    } else if (theme === "light") {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("exit");
     }
@@ -31,7 +30,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: theme || "light", toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
