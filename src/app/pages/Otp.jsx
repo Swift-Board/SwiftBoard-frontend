@@ -1,6 +1,5 @@
 "use client";
 
-import Head from "next/head";
 import Image from "next/image";
 import React, { useRef, useState, useEffect } from "react";
 
@@ -94,9 +93,6 @@ const Otp = () => {
 
   return (
     <>
-    <Head>
-      <title>{pageTitle}</title>
-    </Head>
       <div className="grid lg:mt-20 lg:grid-cols-2 items-center w-full gap-8 p-4">
         {/* Left Illustration */}
         <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">

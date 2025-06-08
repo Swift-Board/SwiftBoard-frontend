@@ -10,12 +10,10 @@ import {
   GoogleLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import Head from "next/head";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const pageTitle = "SwiftBoard | Register";
 
   const togglePassword = () => setShowPassword((prev) => !prev);
   const toggleConfirm = () => setShowConfirm((prev) => !prev);
@@ -46,9 +44,6 @@ const Register = () => {
 
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-      </Head>
       <div className="grid lg:mt-20 lg:grid-cols-2 items-center w-full gap-8 p-4">
         <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
           <Image

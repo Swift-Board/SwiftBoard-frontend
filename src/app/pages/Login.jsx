@@ -15,7 +15,6 @@ import Head from "next/head";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const pageTitle = "SwiftBoard | Login";
   const togglePassword = () => setShowPassword((prev) => !prev);
   const toggleConfirm = () => setShowConfirm((prev) => !prev);
 
@@ -37,9 +36,6 @@ const Login = () => {
 
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-      </Head>
       <div className="grid lg:mt-20 lg:grid-cols-2 items-center w-full gap-8 p-4">
         <div className="dark:bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
           <Image

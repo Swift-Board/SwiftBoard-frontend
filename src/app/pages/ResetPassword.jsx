@@ -4,11 +4,8 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import Head from "next/head";
 
 const ResetPassword = () => {
-  const pageTitle = "SwiftBoard | Reset Password";
-
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -23,9 +20,6 @@ const ResetPassword = () => {
 
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-      </Head>
       <div className="grid lg:mt-20 lg:grid-cols-2 items-center w-full gap-8 p-4">
         <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
           <Image
