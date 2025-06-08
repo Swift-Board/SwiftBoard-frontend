@@ -1,22 +1,28 @@
 "use client";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import useLocalStorage from "use-local-storage";
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const [theme, setTheme] = useLocalStorage(
-    "theme",
-    prefersDark ? "dark" : "light"
-  );
+  const [theme, setTheme] = useLocalStorage("theme", "light");
 
-  React.useEffect(() => {
+  // Set default theme based on system preference
+  useEffect(() => {
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    setTheme((current) => current || (prefersDark ? "dark" : "light"));
+  }, []);
+
+  useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("exit");
     } else {
-      document.documentElement.classList.add("exit");
       document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("exit");
     }
   }, [theme]);
 
