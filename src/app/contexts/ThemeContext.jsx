@@ -10,7 +10,9 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     if (theme === null) {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       setTheme(prefersDark ? "dark" : "light");
     }
   }, [theme]);
@@ -18,7 +20,6 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("exit");
     } else if (theme === "light") {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("exit");

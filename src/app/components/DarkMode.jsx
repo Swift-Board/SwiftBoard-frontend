@@ -10,7 +10,7 @@ const DarkMode = () => {
   if (!theme) return null;
 
   return (
-    <div className="flex items-center justify-center mt-8">
+    <div className="flex items-center justify-center">
       <label className="switch">
         <input
           type="checkbox"
