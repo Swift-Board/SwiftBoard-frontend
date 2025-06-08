@@ -61,9 +61,9 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 100) {
-        navRef.current.classList.add("bg-gray-950");
+        navRef.current.classList.add("bg-black");
       } else {
-        navRef.current.classList.remove("bg-gray-950");
+        navRef.current.classList.remove("bg-black");
       }
     };
 
@@ -122,8 +122,12 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="btn_one">Register</button>
-          <button className="btn_two">Login</button>
+          <Link href="/register">
+            <button className="btn_one">Register</button>
+          </Link>
+          <Link href="/login">
+            <button className="btn_two">Login</button>
+          </Link>
           <DarkMode />
         </div>
       </div>
