@@ -56,7 +56,7 @@ const Register = () => {
         />
       </div>
 
-      <div className="fixed inset-0 flex items-center justify-center overflow-hidden p-8">
+      <div className="flex items-center justify-center h-screen">
         <form
           onSubmit={formik.handleSubmit}
           className="w-full max-w-md space-y-6"
@@ -121,7 +121,7 @@ const Register = () => {
               Password
             </label>
             <span
-              className="absolute top-4 right-3 cursor-pointer text-gray-500"
+              className="absolute top-5 right-3 cursor-pointer text-gray-500"
               onClick={togglePassword}
             >
               {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
@@ -193,7 +193,7 @@ const Register = () => {
           {/* Google Auth */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:translate-y-0.5 ease-in duration-100 p-2 rounded-lg cursor-pointer transition"
+            className="w-full flex items-center justify-center gap-2 bg-white border text-black hover:translate-y-0.5 ease-in duration-100 p-2 rounded-lg cursor-pointer transition"
             onClick={() => console.log("Google Sign In placeholder")}
           >
             <Image

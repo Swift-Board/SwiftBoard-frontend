@@ -91,7 +91,7 @@ const Otp = () => {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <div className="flex justify-evenly items-center w-full gap-8 p-4">
+    <div className="grid lg:grid-cols-2 items-center w-full gap-8 p-4">
       {/* Left Illustration */}
       <div className="bg-[#1C1C1E] hidden lg:flex p-6 justify-center items-center rounded-lg h-screen">
         <Image
@@ -106,7 +106,7 @@ const Otp = () => {
       </div>
 
       {/* Right Form */}
-      <div className="flex flex-col items-center justify-center w-full h-screen inset-0 fixed p-8 overflow-hidden">
+      <div className="flex lg:p-20 items-center justify-center flex-col h-screen">
         <h2 className="text-3xl font-bold text-center mb-6">Verify OTP</h2>
         <p className="text-gray-600 text-center mb-8">
           Enter the 6-digit code sent to your email at ****@gmail.com
