@@ -153,8 +153,8 @@ export default function TripPlanner({
                     className={`flex flex-col items-center px-4 py-3 rounded-md transition 
           ${
             isSelected
-              ? `${glow} bg-[#2c2c2e] text-white`
-              : "bg-[#2c2c2e] text-slate-400"
+              ? `${glow}`
+              : ""
           }`}
                   >
                     <Icon size={24} className="transition" />
