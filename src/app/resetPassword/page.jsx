@@ -1,5 +1,5 @@
 import React from "react";
-import ResetPassword from "../pages/ResetPassword";
+import ResetPassword from "../components/auth/ResetPassword";
 export const metadata = {
   title: "SwiftBoard | Reset Password",
 };

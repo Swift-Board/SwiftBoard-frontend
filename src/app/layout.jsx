@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navbar from "./components/Navbar";
 import { LocationProvider } from "./contexts/LocationContext";
+import NextTopLoader from "nextjs-toploader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,12 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <NextTopLoader
+          color="#8B0000"
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+        />
         <ThemeProvider>
           <LocationProvider>
             <Navbar />

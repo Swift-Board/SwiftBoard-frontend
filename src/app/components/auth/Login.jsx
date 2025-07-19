@@ -10,7 +10,7 @@ import {
   GoogleLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import DarkMode from "../components/DarkMode";
+import DarkMode from "../DarkMode";
 import Head from "next/head";
 
 const Login = () => {

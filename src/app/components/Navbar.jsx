@@ -92,16 +92,18 @@ const Navbar = () => {
       className="px-6 py-4 flex transition-colors ease-in duration-300 items-center justify-between fixed top-0 w-full z-[9999] shadow"
     >
       {/* Logo */}
-      <div className="flex items-center gap-2">
-        <Image
-          src="/swift.svg"
-          alt="SwiftBoard"
-          width={40}
-          height={40}
-          className="w-[40px]"
-        />
-        <h5 className="font-black">SwiftBoard</h5>
-      </div>
+      <Link href="/">
+        <div className="flex items-center gap-2">
+          <Image
+            src="/swift.svg"
+            alt="SwiftBoard"
+            width={40}
+            height={40}
+            className="w-[40px]"
+          />
+          <h5 className="font-black">SwiftBoard</h5>
+        </div>
+      </Link>
 
       {/* Desktop Menu */}
       <div className="hidden md:flex gap-4 items-center">

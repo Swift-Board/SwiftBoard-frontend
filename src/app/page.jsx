@@ -5,8 +5,9 @@ import { useLocation } from "./contexts/LocationContext";
 import dynamic from "next/dynamic";
 import { ArrowsClockwiseIcon } from "@phosphor-icons/react/dist/ssr";
 import Select from "react-select";
+import TripPlanner from "./components/home/TripPlanner";
 
-const Map = dynamic(() => import("./components/Map"), { ssr: false });
+const Map = dynamic(() => import("./components/home/Map"), { ssr: false });
 
 const destinationOptions = [
   { value: "Lagos", label: "Port Harcourt - Lagos" },
@@ -96,32 +97,15 @@ export default function Home() {
           Your current location: {locationName}
         </p>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Map locationName={location} />
-        <div className="bg-[#1C1C1E] rounded-md p-8 w-full">
-          <span className="flex items-center gap-4">
-            <h5 className="text-slate-400 text-xl">{location}</h5>
-            <ArrowsClockwiseIcon
-              onClick={reload}
-              className={`text-orange-400 cursor-pointer transition-transform duration-500 ${
-                rotated ? "rotate-180" : ""
-              }`}
-            />
-          </span>
-
-          <div className="mt-6">
-            <h5 className="text-white text-xl mb-4">Destination</h5>
-            <Select
-              options={destinationOptions}
-              styles={darkSelectStyles}
-              value={selectedDestination}
-              onChange={setSelectedDestination}
-              placeholder="Select a destination"
-              isClearable
-            />
-          </div>
-        </div>
-      </div>
+      <TripPlanner
+        location={locationName}
+        destinationOptions={destinationOptions}
+        selectedDestination={selectedDestination}
+        setSelectedDestination={setSelectedDestination}
+        reload={reload}
+        rotated={rotated}
+        Map={Map}
+      />
     </main>
   );
 }
