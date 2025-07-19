@@ -78,7 +78,7 @@ export default function TripPlanner({
       <div className="grid gap-6 lg:grid-cols-3">
         <Map locationName={location} />
 
-        <div className="bg-[#1C1C1E] rounded-md p-8 w-full">
+        <div className="bg-[#1C1C1E] rounded-md p-6 w-full">
           {/* Header */}
           <div className="flex items-center gap-4">
             <h5 className="text-slate-400 text-xl">{location}</h5>
@@ -91,7 +91,7 @@ export default function TripPlanner({
           </div>
 
           {/* Destination */}
-          <div className="mt-6">
+          <div className="mt-4">
             <h5 className="text-white text-xl mb-4">Destination</h5>
             <Select
               options={destinationOptions}
@@ -104,7 +104,7 @@ export default function TripPlanner({
           </div>
 
           {/* Date Picker */}
-          <div className="mt-6">
+          <div className="mt-4">
             <h5 className="text-white text-xl mb-4">Select Date</h5>
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
@@ -140,7 +140,7 @@ export default function TripPlanner({
           </div>
 
           {/* Vehicle Selection */}
-          <div className="mt-6">
+          <div className="mt-2">
             <h5 className="text-white text-xl mb-4">Select Vehicle</h5>
             <div className="flex justify-between gap-4">
               {vehicleOptions.map(({ label, value, icon: Icon, glow }) => {
@@ -166,7 +166,7 @@ export default function TripPlanner({
           </div>
 
           {/* Search Button */}
-          <div className="mt-8">
+          <div className="mt-4">
             <button
               onClick={handleSearch}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-md text-lg font-medium transition"
