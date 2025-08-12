@@ -60,7 +60,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 100) {
+      if (window.scrollY > 10) {
         navRef.current.classList.add("bg-black");
       } else {
         navRef.current.classList.remove("bg-black");
@@ -95,7 +95,7 @@ const Navbar = () => {
       <Link href="/">
         <div className="flex items-center gap-2">
           <Image
-            src="/swift.svg"
+            src="/Swiftboard.svg"
             alt="SwiftBoard"
             width={40}
             height={40}
