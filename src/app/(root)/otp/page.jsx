@@ -1,5 +1,5 @@
+import Otp from "@/components/auth/Otp";
 import React from "react";
-import Otp from "../components/auth/Otp";
 export const metadata = {
   title: "SwiftBoard | OTP Verification",
 };

@@ -1,13 +1,13 @@
 import React from "react";
-import Register from "../components/auth/Register";
+import Login from "@/components/auth/Login";
 export const metadata = {
-  title: "SwiftBoard | Register",
+  title: "SwiftBoard | Login",
 };
 
 const page = () => {
   return (
     <>
-      <Register />
+      <Login />
     </>
   );
 };

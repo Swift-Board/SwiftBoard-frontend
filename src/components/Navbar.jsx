@@ -8,7 +8,7 @@ import DarkMode from "./DarkMode";
 import { motion, AnimatePresence } from "framer-motion";
 import { List, X } from "@phosphor-icons/react";
 import Select from "react-select";
-import { useLocation } from "../contexts/LocationContext";
+import { useLocation } from "@/app/contexts/LocationContext";
 
 const darkSelectStyles = {
   control: (base) => ({

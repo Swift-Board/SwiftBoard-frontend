@@ -5,9 +5,11 @@ import { useLocation } from "./contexts/LocationContext";
 import dynamic from "next/dynamic";
 import { ArrowsClockwiseIcon } from "@phosphor-icons/react/dist/ssr";
 import Select from "react-select";
-import TripPlanner from "./components/home/TripPlanner";
+import TripPlanner from "@/components/home/TripPlanner";
+import SectionOne from "@/components/home/SectionOne";
+import SectionTwo from "@/components/home/SectionTwo";
 
-const Map = dynamic(() => import("./components/home/Map"), { ssr: false });
+const Map = dynamic(() => import("../components/home/Map"), { ssr: false });
 
 const destinationOptions = [
   { value: "Lagos", label: "Port Harcourt - Lagos" },
@@ -106,6 +108,8 @@ export default function Home() {
         rotated={rotated}
         Map={Map}
       />
+      <SectionOne />
+      <SectionTwo />
     </main>
   );
 }
