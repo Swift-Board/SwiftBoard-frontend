@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "./contexts/LocationContext";
 import dynamic from "next/dynamic";
-import { ArrowsClockwiseIcon } from "@phosphor-icons/react/dist/ssr";
-import Select from "react-select";
 import TripPlanner from "@/components/home/TripPlanner";
 import SectionOne from "@/components/home/SectionOne";
 import SectionTwo from "@/components/home/SectionTwo";
+import ScrollToTop from "@/components/home/ScrollToTop";
 
 const Map = dynamic(() => import("../components/home/Map"), { ssr: false });
 
@@ -17,30 +16,6 @@ const destinationOptions = [
   { value: "Jos", label: "Port Harcourt - Jos" },
   { value: "Warri", label: "Port Harcourt - Warri" },
 ];
-
-const darkSelectStyles = {
-  control: (base) => ({
-    ...base,
-    backgroundColor: "#2C2C2E",
-    borderColor: "#3A3A3C",
-    color: "#fff",
-  }),
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#1C1C1E",
-    color: "#fff",
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: "#fff",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#3A3A3C" : "#1C1C1E",
-    color: "#fff",
-    cursor: "pointer",
-  }),
-};
 
 export default function Home() {
   const { location } = useLocation();
@@ -92,7 +67,7 @@ export default function Home() {
     <main className="layout">
       <span className="grid grid-cols-2 sticky top-16 bg-black py-4 z-[9999]">
         <h1 className="text-3xl font-black mb-2">Bookings</h1>
-        <h5 className="place-self-end">Traveling Details: N/A</h5>
+        <h5 className="place-self-center">Traveling Details: N/A</h5>
       </span>
       <TripPlanner
         location={locationName}
@@ -105,6 +80,7 @@ export default function Home() {
       />
       <SectionOne />
       <SectionTwo />
+      <ScrollToTop />
     </main>
   );
 }

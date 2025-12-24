@@ -154,7 +154,7 @@ export default function Map() {
   return (
     <main className="lg:col-span-2">
       {mapLoading ? (
-        <div className="h-[500px] w-full rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+        <div className="h-[500px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">
@@ -168,7 +168,7 @@ export default function Map() {
             center={position}
             zoom={15}
             scrollWheelZoom={false}
-            className="h-[500px] w-full rounded-lg shadow-lg"
+            className="h-[500px] w-full rounded-2xl shadow-lg"
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
@@ -203,7 +203,7 @@ export default function Map() {
             className="absolute top-4 right-4 z-[1000] bg-white dark:bg-gray-800 shadow-lg rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             title="Refresh your location"
           >
-            🔄 Refresh
+            Refresh
           </button>
         </div>
       ) : (

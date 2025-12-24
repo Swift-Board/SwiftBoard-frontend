@@ -1,15 +1,16 @@
+"use client"
+
 import { footerLinks } from "@/constants";
-import {
-  Envelope,
-  InstagramLogo,
-  LinkedinLogo,
-  MetaLogo,
-  TiktokLogo,
-  TwitterLogo,
-} from "@phosphor-icons/react/dist/ssr";
+import { Instagram, MailIcon, Twitter } from "lucide-react";
 import React from "react";
 
 const Footer = () => {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
   return (
     <footer className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6 bg-[#111] items-center text-white p-4 lg:p-0">
       {/* Footer Links (Divider only on lg) */}
@@ -27,14 +28,7 @@ const Footer = () => {
 
       {/* Social Icons */}
       <div className="flex flex-wrap items-center order-2 lg:order-1 gap-4 pl-0 lg:pl-10 justify-center lg:justify-start">
-        {[
-          InstagramLogo,
-          TwitterLogo,
-          LinkedinLogo,
-          TiktokLogo,
-          MetaLogo,
-          Envelope,
-        ].map((Icon, idx) => (
+        {[Instagram, Twitter, MailIcon].map((Icon, idx) => (
           <Icon
             key={idx}
             size={24}
@@ -53,7 +47,9 @@ const Footer = () => {
           backgroundPosition: "center",
         }}
       >
-        <button className="btn_one">Book Now</button>
+        <button className="btn_one" onClick={scrollToTop}>
+          Start Booking
+        </button>
         <p className="text-sm">&copy; SwiftBoard 2025</p>
       </div>
     </footer>
