@@ -16,7 +16,19 @@ import TripSummaryModal from "./TripSummary";
 import DateSelector from "./Date";
 import VehicleSelector from "./Vehicle";
 import CustomDestinationSelect from "./Destination";
-import Map from "./Map";
+import dynamic from 'next/dynamic';
+
+const Map = dynamic(() => import('./Map'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[500px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
+      </div>
+    </div>
+  )
+});
 
 export default function TripPlanner() {
   const vehicleOptions = [
