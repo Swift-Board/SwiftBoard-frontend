@@ -66,8 +66,8 @@ export default function Home() {
   return (
     <main className="layout">
       <span className="grid grid-cols-2 sticky top-16 bg-black py-4 z-[9999]">
-        <h1 className="text-3xl font-black mb-2">Bookings</h1>
-        <h5 className="place-self-center">Traveling Details: N/A</h5>
+        <h1 className="text-3xl font-black">Bookings</h1>
+        <h5 className="place-self-end">Traveling Details: N/A</h5>
       </span>
       <TripPlanner
         location={locationName}
