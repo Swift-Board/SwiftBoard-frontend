@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { X, MapPin, Calendar, Car, Loader2, LogIn, AlertCircle } from "lucide-react";
+import {
+  X,
+  MapPin,
+  Calendar,
+  Car,
+  Loader2,
+  LogIn,
+  AlertCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
@@ -79,58 +87,8 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold mb-6">Trip Summary</h2>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <MapPin size={18} className="text-blue-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">From</p>
-              <p className="text-white font-medium">{location}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-              <MapPin size={18} className="text-orange-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">To</p>
-              <p className="text-white font-medium">
-                {destination || "Not selected"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-              <Calendar size={18} className="text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Date</p>
-              <p className="text-white font-medium">
-                {selectedDate ? formatDate(selectedDate) : "Not selected"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-              <Car size={18} className="text-amber-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Vehicle</p>
-              <p className="text-white font-medium capitalize">
-                {selectedVehicle || "Not selected"}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {isSearching ? (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 text-center">
+          <div className="rounded-xl p-6 text-center">
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
                 <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
@@ -147,7 +105,7 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
             </div>
           </div>
         ) : showLoginPrompt ? (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
+          <div className="rounded-xl p-6 text-center">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
                 <AlertCircle className="h-6 w-6 text-yellow-500" />
