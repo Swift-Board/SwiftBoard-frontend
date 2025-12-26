@@ -20,35 +20,29 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
       setIsSearching(true);
       setShowLoginPrompt(false);
 
-      // Simulate search delay
-      const searchTimer = setTimeout(() => {
-        setIsSearching(false);
+      const userString = localStorage.getItem("user");
 
-        // Check if user exists in localStorage
-        const userString = localStorage.getItem("user");
-        if (userString) {
-          try {
-            const user = JSON.parse(userString);
-            if (user && user.id) {
-              // User found, redirect to dashboard
-              setTimeout(() => {
-                router.push("/dashboard");
-              }, 500);
-            } else {
-              // Invalid user object
-              setShowLoginPrompt(true);
-            }
-          } catch (error) {
-            console.error("Error parsing user data:", error);
+      if (userString) {
+        try {
+          const user = JSON.parse(userString);
+          if (user && user.id) {
+            setTimeout(() => {
+              localStorage.setItem("tripData", JSON.stringify(tripData));
+              router.push("/available_bookings");
+            }, 500);
+          } else {
+            setIsSearching(false);
             setShowLoginPrompt(true);
           }
-        } else {
-          // No user found
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setIsSearching(false);
           setShowLoginPrompt(true);
         }
-      }, 2000);
-
-      return () => clearTimeout(searchTimer);
+      } else {
+        setIsSearching(false);
+        setShowLoginPrompt(true);
+      }
     }
   }, [isOpen, router]);
 
@@ -57,19 +51,6 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
   };
 
   if (!isOpen) return null;
-
-  const { location, destination, selectedDate, selectedVehicle } = tripData;
-
-  const formatDate = (date) => {
-    if (!date) return null;
-    const options = {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
-  };
 
   return (
     <div
