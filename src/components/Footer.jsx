@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { footerLinks } from "@/constants";
 import { Instagram, MailIcon, Twitter } from "lucide-react";
@@ -14,7 +14,7 @@ const Footer = () => {
   return (
     <footer className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6 bg-[#111] items-center text-white p-4 lg:p-0">
       {/* Footer Links (Divider only on lg) */}
-      <div className="lg:grid lg:order-2 order-1 flex lg:gap-0 gap-3 grid-cols-2 gap-y-2 lg:border-l lg:border-gray-600 lg:pl-8 text-center lg:text-left">
+      <div className="lg:grid lg:order-2 order-1 flex lg:gap-0 gap-3 grid-cols-2 gap-y-2 lg:border-l lg:border-gray-600 lg:pl-8 justify-center">
         {footerLinks.map((link, index) => (
           <a
             href={link.href}

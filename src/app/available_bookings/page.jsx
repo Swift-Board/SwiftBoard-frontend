@@ -8,7 +8,9 @@ import {
   Navigation,
   Calendar,
   Edit,
+  SortAsc,
 } from "lucide-react";
+import AvailableParks from "@/components/available_bookings/AvailableParks";
 
 const page = () => {
   const [tripData, setTripData] = useState({});
@@ -65,6 +67,23 @@ const page = () => {
             Edit
           </button>
         </span>
+
+        <div className="flex items-center gap-4 justify-end mt-6">
+          <h5 className="flex text-[#FFC107] items-center gap-2">
+            Sort By <SortAsc />
+          </h5>
+          <div className="">
+            <select className="border border-slate-200 rounded-2xl p-2">
+              <option value="Distance" className="bg-black text-white">
+                Distance
+              </option>
+              <option value="Price" className="bg-black text-white">
+                Price
+              </option>
+            </select>
+          </div>
+        </div>
+        <AvailableParks tripData={tripData} />
       </main>
     </>
   );

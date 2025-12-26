@@ -112,3 +112,7 @@ section {
 .btn_two {
   @apply bg-white px-4 py-2 rounded-md text-transparent border border-black hover:border-gray-300 cursor-pointer transition-all ease-in duration-300 bg-clip-text bg-gradient-to-r from-[#FFC107] from-10% to-[#FF4B5C] to-90% shadow-md;
 }
+
+.no_scrollbar {
+  scrollbar-width: none;
+}
