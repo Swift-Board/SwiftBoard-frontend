@@ -16,9 +16,9 @@ import TripSummaryModal from "./TripSummary";
 import DateSelector from "./Date";
 import VehicleSelector from "./Vehicle";
 import CustomDestinationSelect from "./Destination";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const Map = dynamic(() => import('./Map'), {
+const Map = dynamic(() => import("./Map"), {
   ssr: false,
   loading: () => (
     <div className="h-[500px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
@@ -27,7 +27,7 @@ const Map = dynamic(() => import('./Map'), {
         <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
       </div>
     </div>
-  )
+  ),
 });
 
 export default function TripPlanner() {
@@ -69,7 +69,7 @@ export default function TripPlanner() {
   const [location] = useState("Port Harcourt");
   const [selectedDate, setSelectedDate] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState("bus");
   const [destination, setDestination] = useState("");
   const [showPopup, setShowPopup] = useState(false);
 
@@ -126,6 +126,7 @@ export default function TripPlanner() {
                   selectedVehicle={selectedVehicle}
                   onSelectVehicle={setSelectedVehicle}
                   options={vehicleOptions}
+                  defaultVehicle="sienna"
                 />
               </div>
 

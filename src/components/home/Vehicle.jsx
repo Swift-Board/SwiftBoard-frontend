@@ -1,4 +1,13 @@
-const VehicleSelector = ({ selectedVehicle, onSelectVehicle, options }) => {
+import { useEffect } from "react";
+
+const VehicleSelector = ({ selectedVehicle, onSelectVehicle, options, defaultVehicle }) => {
+  // Set default vehicle on mount if no vehicle is selected
+  useEffect(() => {
+    if (!selectedVehicle && defaultVehicle) {
+      onSelectVehicle(defaultVehicle);
+    }
+  }, []);
+
   return (
     <div>
       <label className="text-sm text-gray-400 mb-3 block font-medium">

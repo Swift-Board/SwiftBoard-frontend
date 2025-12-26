@@ -3,7 +3,7 @@ import { MapPin, Navigation } from "lucide-react";
 const LocationHeader = ({ location, onChangeLocation }) => {
   return (
     <div className="mb-2 pb-1 border-b border-gray-800">
-      <div className="grid lg:grid-cols-2 gap-3">
+      <div className="flex justify-between flex-wrap gap-3">
         <div>
           <label className="text-sm text-gray-400 mb-2 block">
             Traveling From
