@@ -44,7 +44,7 @@ const TravelDetails = () => {
     <div className="min-h-screen">
       <div className="mx-auto">
         {/* Filter Buttons */}
-        <div className="flex sticky top-16 bg-black py-4 z-50 flex-wrap gap-3 mb-6 mt-4">
+        <div className="flex sticky top-16 bg-black py-4 z-50 no_scrollbar overflow-scroll gap-3 mb-6 mt-4">
           {["all", "completed", "ongoing", "pending"].map((status) => (
             <button
               key={status}
@@ -152,11 +152,10 @@ const TravelDetails = () => {
                 <AlertCircle size={32} className="text-slate-500" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
-                No {filter} rides found
+                No rides found
               </h3>
               <p className="text-slate-400 max-w-xs mb-6">
-                It looks like there are no trips matching the "{filter}" status
-                at the moment.
+                There are no trips matching the "{filter}" status at the moment.
               </p>
               {filter !== "all" && (
                 <button

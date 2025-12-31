@@ -6,7 +6,7 @@ const page = () => {
   return (
     <>
       <main className="layout">
-        <div className="">
+        <div className="mt-4">
           <span>
             <h1 className="text-3xl font-black flex items-center gap-2">
               Travels <Car size={40} />
