@@ -274,7 +274,7 @@ const Ticket = ({ selectedRide, getStatusColor, setSelectedRide }) => {
                   </div>
 
                   {/* Price Section */}
-                  <div className="p-6 border-t border-b">
+                  <div className="p-6">
                     <div className="flex items-center justify-between">
                       <span className="text-white text-lg">TOTAL FARE</span>
                       <span className="text-3xl font-bold text-white">

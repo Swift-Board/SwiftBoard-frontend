@@ -4,35 +4,9 @@ import { CaretDownIcon, MapPin } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
-import DarkMode from "./DarkMode";
 import { motion, AnimatePresence } from "framer-motion";
 import { List, X } from "@phosphor-icons/react";
-import Select from "react-select";
 import { useLocation } from "@/app/contexts/LocationContext";
-
-const darkSelectStyles = {
-  control: (base) => ({
-    ...base,
-    backgroundColor: "#2C2C2E",
-    borderColor: "#3A3A3C",
-    color: "#fff",
-  }),
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#1C1C1E",
-    color: "#fff",
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: "#fff",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#3A3A3C" : "#1C1C1E",
-    color: "#fff",
-    cursor: "pointer",
-  }),
-};
 
 const Navbar = () => {
   const { city, isLoading, updateLocation } = useLocation();
@@ -41,27 +15,14 @@ const Navbar = () => {
 
   const toggleDropdown = () => setMenuOpen((prev) => !prev);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        navRef.current.classList.add("bg-black");
-      } else {
-        navRef.current.classList.remove("bg-black");
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
     <nav
       ref={navRef}
-      className="px-6 py-4 flex transition-colors ease-in duration-300 items-center justify-between fixed top-0 w-full z-[9999] shadow"
+      className="px-6 py-4 flex bg-black transition-colors ease-in duration-300 items-center justify-between fixed top-0 w-full z-[9999] shadow"
     >
       {/* Logo */}
       <Link href="/">
-        <div className="flex items-center gap-2">
+        <div className="flex bg-black items-center gap-2">
           <Image
             src="/Swiftboard.svg"
             alt="SwiftBoard"

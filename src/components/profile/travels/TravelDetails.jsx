@@ -40,6 +40,11 @@ const TravelDetails = () => {
     }
   };
 
+  const getStatusCount = (status) => {
+    if (status === "all") return ride_details.length;
+    return ride_details.filter((ride) => ride.status === status).length;
+  };
+
   return (
     <div className="min-h-screen">
       <div className="mx-auto">
@@ -49,19 +54,28 @@ const TravelDetails = () => {
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+              className={`px-6 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 filter === status
                   ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
               }`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  filter === status
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-700 text-slate-400"
+                }`}
+              >
+                {getStatusCount(status)}
+              </span>
             </button>
           ))}
         </div>
 
         {/* Table Container */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+        <div className="overflow-hidden">
           {filteredRides.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -151,28 +165,10 @@ const TravelDetails = () => {
               <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle size={32} className="text-slate-500" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                No rides found
-              </h3>
               <p className="text-slate-400 max-w-xs mb-6">
                 There are no trips matching the "{filter}" status at the moment.
               </p>
-              {filter !== "all" && (
-                <button
-                  onClick={() => setFilter("all")}
-                  className="text-orange-400 hover:text-orange-300 font-medium transition-colors"
-                >
-                  View all rides
-                </button>
-              )}
-              {filter == "all" && (
-                <button
-                  onClick={() => router.replace("/")}
-                  className="text-orange-400 hover:text-orange-300 font-medium transition-colors"
-                >
-                  Start Booking
-                </button>
-              )}
+              <button className="btn_one">Start Booking</button>
             </div>
           )}
         </div>
