@@ -18,7 +18,7 @@ const Navbar = () => {
   return (
     <nav
       ref={navRef}
-      className="px-6 py-4 flex bg-black transition-colors ease-in duration-300 items-center justify-between fixed top-0 w-full z-[9999] shadow"
+      className="px-6 py-4 flex bg-black transition-colors ease-in duration-300 border-b border-slate-800 items-center justify-between fixed top-0 w-full z-[9999] shadow"
     >
       {/* Logo */}
       <Link href="/">
@@ -37,7 +37,7 @@ const Navbar = () => {
       {/* Desktop Menu */}
       <div className="hidden md:flex gap-4 items-center">
         {/* Location dropdown */}
-        <div 
+        <div
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={updateLocation}
           title="Click to refresh location"
@@ -80,7 +80,7 @@ const Navbar = () => {
             className="absolute top-full left-0 w-full bg-black text-white shadow-md md:hidden"
           >
             <div className="p-4 flex flex-col gap-4">
-              <div 
+              <div
                 className="flex items-center gap-2 text-white cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={updateLocation}
               >

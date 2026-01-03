@@ -10,7 +10,7 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
+// lt saeada
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
