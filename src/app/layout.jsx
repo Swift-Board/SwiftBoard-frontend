@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import Footer from "@/components/Footer";
+import { NotificationProvider } from "@/components/Notification";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,9 +36,11 @@ export default function RootLayout({ children }) {
         />
         <ThemeProvider>
           <LocationProvider>
-            <Navbar />
-            {children}
-            <Footer />
+            <NotificationProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </NotificationProvider>
           </LocationProvider>
         </ThemeProvider>
       </body>

@@ -4,16 +4,17 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  EyeSlashIcon,
-  EyeIcon,
-  GoogleLogo,
-} from "@phosphor-icons/react/dist/ssr";
+import { EyeSlashIcon, EyeIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "@/utils/axios";
+import { useNotification } from "@/components/Notification";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const router = useRouter();
+  const { showNotification } = useNotification();
 
   const togglePassword = () => setShowPassword((prev) => !prev);
   const toggleConfirm = () => setShowConfirm((prev) => !prev);
@@ -31,14 +32,47 @@ const Register = () => {
       firstName: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
       password: Yup.string()
-        .min(8, "Must be at least 8 characters") // updated to 8
+        .min(8, "Must be at least 8 characters")
         .required("Required"),
       confirmPassword: Yup.string()
         .oneOf([Yup.ref("password"), null], "Passwords must match")
         .required("Required"),
     }),
-    onSubmit: (values) => {
-      console.log("Signup data:", values);
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const response = await api.post("/api/auth/register", values);
+
+        if (response.data.success) {
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+
+          // Show success notification
+          showNotification({
+            type: "success",
+            message: response.data.message || "Registration successful!",
+            duration: 5000,
+          });
+
+          resetForm();
+
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1500);
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message ||
+          "Registration failed. Please try again.";
+
+        showNotification({
+          type: "error",
+          message: errorMessage,
+          duration: 5000,
+        });
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
@@ -179,45 +213,23 @@ const Register = () => {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!(formik.isValid && formik.dirty)}
-              className={`w-full py-3 rounded-lg text-white cursor-pointer font-semibold ${
-                formik.isValid && formik.dirty
-                  ? "bg-[#FF4B5C]"
+              disabled={
+                !(formik.isValid && formik.dirty) || formik.isSubmitting
+              }
+              className={`w-full py-3 rounded-lg text-white font-semibold transition-all ${
+                formik.isValid && formik.dirty && !formik.isSubmitting
+                  ? "bg-[#FF4B5C] hover:bg-[#e6414f] cursor-pointer"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
             >
-              Sign Up
-            </button>
-
-            <div className="flex items-center gap-2">
-              <hr className="flex-1 border-gray-300" />
-              <span className="text-sm text-gray-500">or sign up with</span>
-              <hr className="flex-1 border-gray-300" />
-            </div>
-
-            {/* Google Auth */}
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 bg-white border text-black hover:translate-y-0.5 ease-in duration-100 p-2 rounded-lg cursor-pointer transition"
-              onClick={() => console.log("Google Sign In placeholder")}
-            >
-              <Image
-                src="/google.svg"
-                alt="Google Icon"
-                width={10}
-                height={10}
-                blurDataURL="data:..."
-                placeholder="blur"
-                className="w-8"
-              />
-              Continue with Google
+              {formik.isSubmitting ? "Signing Up..." : "Sign Up"}
             </button>
 
             <small className="flex justify-center">
               Already have an account? &nbsp;
               <Link href="/login">
                 <span className="underline text-[#FF4B5C]">Login</span>
-              </Link>{" "}
+              </Link>
             </small>
           </form>
         </div>
