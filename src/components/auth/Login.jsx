@@ -50,7 +50,7 @@ const Login = () => {
 
           setTimeout(() => {
             router.push("/");
-            window.location.reload();
+            router.refresh();
           }, 1500);
         }
       } catch (error) {
