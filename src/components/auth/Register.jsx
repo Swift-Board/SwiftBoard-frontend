@@ -50,7 +50,7 @@ const Register = () => {
           showNotification({
             type: "success",
             message: response.data.message || "Registration successful!",
-            duration: 5000,
+            duration: 2000,
           });
 
           resetForm();
@@ -68,7 +68,7 @@ const Register = () => {
         showNotification({
           type: "error",
           message: errorMessage,
-          duration: 5000,
+          duration: 2000,
         });
       } finally {
         setSubmitting(false);

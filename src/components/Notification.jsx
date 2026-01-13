@@ -103,12 +103,10 @@ export const NotificationProvider = ({ children }) => {
 
   const showNotification = ({ type = "info", message, duration = 5000 }) => {
     const id = Date.now() + Math.random();
-    console.log("Showing notification:", { type, message, id }); // Debug log
     setNotifications((prev) => [...prev, { id, type, message, duration }]);
   };
 
   const removeNotification = (id) => {
-    console.log("Removing notification:", id); // Debug log
     setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   };
 

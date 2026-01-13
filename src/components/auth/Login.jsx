@@ -10,11 +10,15 @@ import {
   GoogleLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { api } from "@/utils/axios";
+import { useNotification } from "../Notification";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const togglePassword = () => setShowPassword((prev) => !prev);
-  const toggleConfirm = () => setShowConfirm((prev) => !prev);
+  const { showNotification } = useNotification();
+  const router = useRouter();
 
   const formik = useFormik({
     initialValues: {
@@ -27,8 +31,40 @@ const Login = () => {
         .min(8, "Must be at least 8 characters") // updated to 8
         .required("Required"),
     }),
-    onSubmit: (values) => {
-      console.log("Signup data:", values);
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const response = await api.post("/api/auth/login", values);
+
+        if (response.data.success) {
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+
+          // Show success notification
+          showNotification({
+            type: "success",
+            message: response.data.message || "Login successful!",
+            duration: 2000,
+          });
+
+          resetForm();
+
+          setTimeout(() => {
+            router.push("/");
+            window.location.reload();
+          }, 1500);
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message || "Login failed. Please try again.";
+
+        showNotification({
+          type: "error",
+          message: errorMessage,
+          duration: 2000,
+        });
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
@@ -134,31 +170,7 @@ const Login = () => {
                   : "bg-gray-400 cursor-not-allowed"
               }`}
             >
-              Sign Up
-            </button>
-
-            <div className="flex items-center gap-2">
-              <hr className="flex-1 border-gray-300" />
-              <span className="text-sm text-gray-500">or sign up with</span>
-              <hr className="flex-1 border-gray-300" />
-            </div>
-
-            {/* Google Auth */}
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 dark:bg-white border text-black hover:translate-y-0.5 ease-in duration-100 p-2 rounded-lg cursor-pointer transition"
-              onClick={() => console.log("Google Sign In placeholder")}
-            >
-              <Image
-                src="/google.svg"
-                alt="Google Icon"
-                width={10}
-                height={10}
-                blurDataURL="data:..."
-                placeholder="blur"
-                className="w-8"
-              />
-              Continue with Google
+              {formik.isSubmitting ? "Logging In..." : "Login"}
             </button>
 
             <small className="flex justify-center">

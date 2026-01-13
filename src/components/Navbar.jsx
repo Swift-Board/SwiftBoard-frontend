@@ -165,10 +165,63 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu Toggle */}
-      <div className="md:hidden">
-        <button onClick={toggleDropdown}>
-          {menuOpen ? <X size={28} /> : <List size={28} />}
-        </button>
+      <div className="md:hidden flex items-center gap-3">
+        {user && (
+          <div className="relative" ref={profileRef}>
+            <div
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={toggleProfile}
+            >
+              {user.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-cyan-400 flex items-center justify-center text-white font-semibold text-sm">
+                  {getInitials(user.firstName, user.lastName)}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Profile Dropdown */}
+            <AnimatePresence>
+              {profileOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+                >
+                  <Link href="/profile/account">
+                    <div
+                      onClick={() => setProfileOpen(false)}
+                      className="px-4 py-3 hover:bg-gray-700 cursor-pointer flex items-center gap-2 transition-colors"
+                    >
+                      <User size={20} />
+                      <span>Profile</span>
+                    </div>
+                  </Link>
+                  <div
+                    onClick={handleLogout}
+                    className="px-4 py-3 hover:bg-gray-700 cursor-pointer flex items-center gap-2 transition-colors text-red-400"
+                  >
+                    <SignOut size={20} />
+                    <span>Logout</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+        {!user && (
+          <button onClick={toggleDropdown}>
+            {menuOpen ? <X size={28} /> : <List size={28} />}
+          </button>
+        )}
       </div>
 
       {/* Mobile Dropdown */}
@@ -181,61 +234,12 @@ const Navbar = () => {
             className="absolute top-full left-0 w-full bg-black text-white shadow-md md:hidden"
           >
             <div className="p-4 flex flex-col gap-4">
-              <div
-                className="flex items-center gap-2 text-white cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={updateLocation}
-              >
-                <MapPin weight="fill" size={30} />
-                <h5>
-                  {isLoading ? (
-                    <span className="animate-pulse">Detecting...</span>
-                  ) : (
-                    city || "Unknown"
-                  )}
-                </h5>
-              </div>
-
-              {/* Mobile Auth Section */}
-              {user ? (
+              {!user && (
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-lg">
-                    {user.avatar ? (
-                      <Image
-                        src={user.avatar}
-                        alt="Profile"
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-cyan-400 flex items-center justify-center text-white font-semibold text-sm">
-                        {getInitials(user.firstName, user.lastName)}
-                      </div>
-                    )}
-                    <span className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </span>
-                  </div>
-                  <Link href="/profile">
-                    <button className="btn_one w-full flex items-center justify-center gap-2">
-                      <User size={20} />
-                      Profile
-                    </button>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="btn_two w-full flex items-center justify-center gap-2 text-red-400"
-                  >
-                    <SignOut size={20} />
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Link href="/register">
+                  <Link onClick={() => setMenuOpen(false)} href="/register">
                     <button className="btn_one w-full">Register</button>
                   </Link>
-                  <Link href="/login">
+                  <Link onClick={() => setMenuOpen(false)} href="/login">
                     <button className="btn_two w-full">Login</button>
                   </Link>
                 </div>
