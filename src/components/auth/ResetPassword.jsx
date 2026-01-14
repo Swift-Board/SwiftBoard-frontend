@@ -1,11 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useNotification } from "../Notification";
+import { useRouter } from "next/navigation";
+import { api } from "@/utils/axios";
 
 const ResetPassword = () => {
+  const { showNotification } = useNotification();
+  const router = useRouter();
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -13,8 +19,35 @@ const ResetPassword = () => {
     validationSchema: Yup.object({
       email: Yup.string().email("Invalid email").required("Required"),
     }),
-    onSubmit: (values) => {
-      console.log("Signup data:", values);
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const response = await api.post("/api/auth/forgot-password", values);
+
+        if (response.data.success) {
+          showNotification({
+            type: "success",
+            message: response.data.message || "OTP sent successfully!",
+            duration: 2000,
+          });
+
+          localStorage.setItem("resetEmail", values.email);
+
+          setTimeout(() => {
+            router.push("/otp");
+          }, 1500);
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to send OTP. Please try again.";
+
+        showNotification({
+          type: "error",
+          message: errorMessage,
+          duration: 2000,
+        });
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
@@ -42,10 +75,10 @@ const ResetPassword = () => {
               Reset your password
             </h2>
             <p className="text-gray-600 text-center mb-8">
-              Please input your email address to continue
+              Please input your email address to receive OTP
             </p>
 
-            {/* Input Group Template */}
+            {/* Email Input */}
             {[{ label: "Email", id: "email", type: "email" }].map(
               ({ label, id, type }) => (
                 <div key={id} className="relative w-full">
@@ -79,18 +112,29 @@ const ResetPassword = () => {
               )
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={!(formik.isValid && formik.dirty)}
+              disabled={formik.isSubmitting || !(formik.isValid && formik.dirty)}
               className={`w-full py-3 rounded-lg text-white cursor-pointer font-semibold ${
-                formik.isValid && formik.dirty
-                  ? "bg-[#FF4B5C]"
+                formik.isValid && formik.dirty && !formik.isSubmitting
+                  ? "bg-[#FF4B5C] hover:bg-[#e43f50]"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
             >
-              Request OTP{" "}
+              {formik.isSubmitting ? "Sending..." : "Request OTP"}
             </button>
+
+            {/* Back to Login */}
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="text-orange-500 hover:underline"
+              >
+                Back to Login
+              </button>
+            </div>
           </form>
         </div>
       </div>

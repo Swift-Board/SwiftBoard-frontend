@@ -2,13 +2,39 @@
 
 import Image from "next/image";
 import React, { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useNotification } from "../Notification";
+import { api } from "@/utils/axios";
 
 const Otp = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
-  const [timer, setTimer] = useState(20);
+  const [timer, setTimer] = useState(120); // 2 minutes
   const [canResend, setCanResend] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const inputsRef = useRef([]);
-  const pageTitle = "SwiftBoard | OTP Verification";
+  const router = useRouter();
+  const { showNotification } = useNotification();
+
+  useEffect(() => {
+    // Get email from localStorage
+    const storedEmail = localStorage.getItem("resetEmail");
+    if (!storedEmail) {
+      showNotification({
+        type: "error",
+        message: "No email found. Please start the reset process again.",
+        duration: 3000,
+      });
+      router.push("/reset-password");
+      return;
+    }
+    setEmail(storedEmail);
+
+    // Focus first input
+    if (inputsRef.current[0]) {
+      inputsRef.current[0].focus();
+    }
+  }, []);
 
   useEffect(() => {
     let interval = null;
@@ -68,28 +94,115 @@ const Otp = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const fullOtp = otp.join("");
-    if (fullOtp.length === 6 && /^\d{6}$/.test(fullOtp)) {
-      console.log("Entered OTP:", fullOtp);
-      // Add your OTP verification logic here
-    } else {
-      alert("Please enter a valid 6-digit OTP.");
+
+    if (fullOtp.length !== 6 || !/^\d{6}$/.test(fullOtp)) {
+      showNotification({
+        type: "error",
+        message: "Please enter a valid 6-digit OTP.",
+        duration: 2000,
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+
+    try {
+      // Verify OTP
+      const response = await api.post("/api/auth/verify-otp", {
+        email: email,
+        otp: fullOtp,
+      });
+
+      if (response.data.success) {
+        showNotification({
+          type: "success",
+          message: "OTP verified successfully!",
+          duration: 2000,
+        });
+
+        // Store OTP for password reset page
+        localStorage.setItem("verifiedOTP", fullOtp);
+
+        // Navigate to new password page
+        setTimeout(() => {
+          router.push("/new-password");
+        }, 1500);
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Invalid or expired OTP. Please try again.";
+
+      showNotification({
+        type: "error",
+        message: errorMessage,
+        duration: 3000,
+      });
+
+      // Clear OTP on error
+      setOtp(new Array(6).fill(""));
+      if (inputsRef.current[0]) {
+        inputsRef.current[0].focus();
+      }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const handleResend = () => {
-    setOtp(new Array(6).fill(""));
-    inputsRef.current[0].focus();
-    setTimer(10);
-    setCanResend(false);
+  const handleResend = async () => {
+    if (!canResend) return;
 
-    // TODO: Add actual resend OTP logic here (API call)
-    console.log("Resend OTP clicked");
+    try {
+      const response = await api.post("/api/auth/forgot-password", {
+        email: email,
+      });
+
+      if (response.data.success) {
+        showNotification({
+          type: "success",
+          message: "New OTP sent to your email!",
+          duration: 2000,
+        });
+
+        setOtp(new Array(6).fill(""));
+        if (inputsRef.current[0]) {
+          inputsRef.current[0].focus();
+        }
+        setTimer(120); // Reset timer to 2 minutes
+        setCanResend(false);
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to resend OTP. Please try again.";
+
+      showNotification({
+        type: "error",
+        message: errorMessage,
+        duration: 2000,
+      });
+    }
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
+
+  // Format timer display
+  const formatTimer = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Mask email
+  const maskEmail = (email) => {
+    if (!email) return "****@gmail.com";
+    const [username, domain] = email.split("@");
+    const maskedUsername = username.slice(0, 2) + "****";
+    return `${maskedUsername}@${domain}`;
+  };
 
   return (
     <>
@@ -111,7 +224,7 @@ const Otp = () => {
         <div className="flex lg:p-20 items-center justify-center flex-col h-screen">
           <h2 className="text-3xl font-bold text-center mb-6">Verify OTP</h2>
           <p className="text-gray-600 text-center mb-8">
-            Enter the 6-digit code sent to your email at ****@gmail.com
+            Enter the 6-digit code sent to your email at {maskEmail(email)}
           </p>
 
           <form
@@ -131,23 +244,24 @@ const Otp = () => {
                   value={otp[index]}
                   onChange={(e) => handleChange(e.target, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="w-12 h-14 text-2xl text-center border border-gray-300 rounded-lg outline-none focus:border-blue-500 transition-all"
+                  className="w-12 h-14 text-2xl text-center border border-gray-300 rounded-lg outline-none focus:border-orange-500 transition-all"
                   autoComplete="one-time-code"
+                  disabled={isVerifying}
                 />
               ))}
             </div>
 
             <button
               type="submit"
-              disabled={!isOtpComplete}
+              disabled={!isOtpComplete || isVerifying}
               className={`w-full py-3 rounded-lg font-semibold transition
               ${
-                isOtpComplete
+                isOtpComplete && !isVerifying
                   ? "bg-[#FF4B5C] text-white hover:bg-[#e43f50]"
                   : "bg-gray-300 text-gray-600 cursor-not-allowed"
               }`}
             >
-              Verify OTP
+              {isVerifying ? "Verifying..." : "Verify OTP"}
             </button>
           </form>
 
@@ -155,13 +269,26 @@ const Otp = () => {
             {canResend ? (
               <button
                 onClick={handleResend}
-                className="text-blue-600 hover:underline font-semibold"
+                className="text-orange-600 hover:underline font-semibold"
               >
                 Resend OTP
               </button>
             ) : (
-              <p className="text-gray-500">Resend OTP in {timer} seconds</p>
+              <p className="text-gray-500">
+                Resend OTP in {formatTimer(timer)}
+              </p>
             )}
+          </div>
+
+          {/* Back to Reset Password */}
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => router.push("/resetPassword")}
+              className="text-gray-500 hover:underline"
+            >
+              Back to Reset Password
+            </button>
           </div>
         </div>
       </div>

@@ -12,13 +12,11 @@ import {
 import Link from "next/link";
 import { api } from "@/utils/axios";
 import { useNotification } from "../Notification";
-import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const togglePassword = () => setShowPassword((prev) => !prev);
   const { showNotification } = useNotification();
-  const router = useRouter();
 
   const formik = useFormik({
     initialValues: {
@@ -39,7 +37,6 @@ const Login = () => {
           localStorage.setItem("token", response.data.token);
           localStorage.setItem("user", JSON.stringify(response.data.user));
 
-          // Show success notification
           showNotification({
             type: "success",
             message: response.data.message || "Login successful!",
@@ -49,8 +46,7 @@ const Login = () => {
           resetForm();
 
           setTimeout(() => {
-            router.push("/");
-            router.refresh();
+            window.location.href = "/";
           }, 1500);
         }
       } catch (error) {
