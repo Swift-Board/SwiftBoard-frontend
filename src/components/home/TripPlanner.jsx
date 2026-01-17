@@ -1,22 +1,15 @@
-import { useState, useRef, useEffect } from "react";
-import {
-  Calendar,
-  Car,
-  Bus,
-  MapPin,
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Navigation,
-  CarTaxiFront,
-} from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Car, Bus, CarTaxiFront, Loader2, AlertCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import LocationHeader from "./LocationHeader";
 import TripSummaryModal from "./TripSummary";
 import DateSelector from "./Date";
 import VehicleSelector from "./Vehicle";
 import CustomDestinationSelect from "./Destination";
-import dynamic from "next/dynamic";
+import { api } from "@/utils/axios";
+import { useRouter } from "next/navigation";
 
 const Map = dynamic(() => import("./Map"), {
   ssr: false,
@@ -67,18 +60,55 @@ export default function TripPlanner() {
   ];
 
   const [location] = useState("Port Harcourt");
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState("bus");
   const [destination, setDestination] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState("bus");
+  const [showCalendar, setShowCalendar] = useState(false);
+  const router = useRouter();
+
   const [showPopup, setShowPopup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [availableRides, setAvailableRides] = useState([]);
+  const [searchError, setSearchError] = useState(null);
 
-  const handleSearch = () => {
-    setShowPopup(true);
-  };
+  const handleSearch = async () => {
+    setIsLoading(true);
 
-  const handleChangeLocation = () => {
-    console.log("Change location clicked");
+    const datePicker = new Date(selectedDate);
+    const formattedDate = datePicker.toLocaleDateString("en-CA");
+
+    try {
+      const response = await api.get("/rides/search", {
+        params: {
+          origin: location,
+          destination: destination,
+          date: formattedDate,
+          vehicleType: selectedVehicle,
+        },
+      });
+      console.log("API Response:", response.data);
+
+      if (response.data.rides.length === 0) {
+        console.warn("Server found 0 matches in DB");
+      }
+
+      const tripData = {
+        location,
+        destination,
+        selectedDate,
+        selectedVehicle,
+        results: response.data.rides,
+      };
+
+      localStorage.setItem("tripData", JSON.stringify(tripData));
+
+      router.push("/available_bookings");
+    } catch (error) {
+      console.error("Search failed", error);
+      setSearchError("No rides found for this route.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -88,13 +118,12 @@ export default function TripPlanner() {
           <Map />
         </div>
 
-        <div className="">
+        <div>
           <div className="max-w-4xl mx-auto">
-            {/* Main Card */}
             <div className="bg-[#1C1C1E] rounded-2xl shadow-2xl p-8 border border-gray-800">
               <LocationHeader
                 location={location}
-                onChangeLocation={handleChangeLocation}
+                onChangeLocation={() => console.log("Change location clicked")}
               />
 
               {/* Destination */}
@@ -130,13 +159,30 @@ export default function TripPlanner() {
                 />
               </div>
 
+              {/* Error Message */}
+              {searchError && (
+                <div className="mb-4 flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">
+                  <AlertCircle size={16} />
+                  <span>{searchError}</span>
+                </div>
+              )}
+
               {/* Search Button */}
               <button
                 onClick={handleSearch}
-                disabled={!destination || !selectedDate || !selectedVehicle}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-2 rounded-xl text-md font-semibold transition-all shadow-lg hover:shadow-xl"
+                disabled={
+                  !destination || !selectedDate || !selectedVehicle || isLoading
+                }
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-xl text-md font-semibold transition-all shadow-lg flex items-center justify-center gap-2"
               >
-                Find Available Rides
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Searching...
+                  </>
+                ) : (
+                  "Find Available Rides"
+                )}
               </button>
             </div>
           </div>
@@ -146,6 +192,7 @@ export default function TripPlanner() {
       <TripSummaryModal
         isOpen={showPopup}
         onClose={() => setShowPopup(false)}
+        rides={availableRides}
         tripData={{
           location,
           destination,
@@ -153,23 +200,6 @@ export default function TripPlanner() {
           selectedVehicle,
         }}
       />
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.2s ease-out;
-        }
-        .animate-scale-in {
-          animation: scaleIn 0.2s ease-out;
-        }
-      `}</style>
     </>
   );
 }

@@ -21,7 +21,7 @@ const ResetPassword = () => {
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        const response = await api.post("/api/auth/forgot-password", values);
+        const response = await api.post("/auth/forgot-password", values);
 
         if (response.data.success) {
           showNotification({

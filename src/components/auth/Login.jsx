@@ -31,7 +31,7 @@ const Login = () => {
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        const response = await api.post("/api/auth/login", values);
+        const response = await api.post("/auth/login", values);
 
         if (response.data.success) {
           localStorage.setItem("token", response.data.token);

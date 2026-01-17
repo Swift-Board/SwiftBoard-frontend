@@ -40,7 +40,7 @@ const Register = () => {
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        const response = await api.post("/api/auth/register", values);
+        const response = await api.post("/auth/register", values);
 
         if (response.data.success) {
           localStorage.setItem("token", response.data.token);

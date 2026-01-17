@@ -55,7 +55,7 @@ const NewPassword = () => {
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        const response = await api.post("/api/auth/reset-password", {
+        const response = await api.post("/auth/reset-password", {
           email: email,
           otp: otp,
           password: values.password,

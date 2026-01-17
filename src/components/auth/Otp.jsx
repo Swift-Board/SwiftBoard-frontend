@@ -156,7 +156,7 @@ const Otp = () => {
     if (!canResend) return;
 
     try {
-      const response = await api.post("/api/auth/forgot-password", {
+      const response = await api.post("/auth/forgot-password", {
         email: email,
       });
 
