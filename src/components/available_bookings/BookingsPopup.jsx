@@ -1,79 +1,321 @@
-import { Banknote, Clock, MapPin, Users, X, Armchair } from "lucide-react";
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
+import { X, Armchair, Wifi, WifiOff } from "lucide-react";
+import { usePaystackPayment } from "react-paystack";
+import { io } from "socket.io-client";
+import { useNotification } from "../Notification";
+import { api } from "@/utils/axios";
 
-const BookingsPopup = ({ isModalOpen, selectedRide, closeModal, tripData }) => {
+const BookingsPopup = ({
+  isModalOpen,
+  selectedRide,
+  closeModal,
+  tripData,
+  onBookingSuccess,
+}) => {
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [liveOccupiedSeats, setLiveOccupiedSeats] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const socketRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const paymentTimeoutRef = useRef(null);
+  const { showNotification } = useNotification();
 
+  // --- Real-time Socket Listener ---
   useEffect(() => {
-    if (selectedSeats.length > 0 && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth",
+    if (!isModalOpen || !selectedRide) return;
+
+    setIsLoading(true);
+
+    // Connect to backend
+    const socket = io(
+      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000",
+      {
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      },
+    );
+
+    socketRef.current = socket;
+
+    // Connection status handlers
+    socket.on("connect", () => {
+      console.log("✅ Socket connected");
+      setIsConnected(true);
+      socket.emit("joinRideRoom", selectedRide._id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected");
+      setIsConnected(false);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+      setIsConnected(false);
+    });
+
+    // 🔄 Fetch fresh ride data from backend to ensure we have latest seats
+    const fetchLatestRideData = async () => {
+      try {
+        const { data } = await api.get(`/rides/${selectedRide._id}`);
+        if (data.success && data.ride) {
+          console.log("🔄 Fetched latest seat data:", data.ride.occupiedSeats);
+          setLiveOccupiedSeats(data.ride.occupiedSeats || []);
+        } else {
+          // Fallback to prop data if API fails
+          setLiveOccupiedSeats(selectedRide.occupiedSeats || []);
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch latest ride data:", error);
+        // Fallback to prop data
+        setLiveOccupiedSeats(selectedRide.occupiedSeats || []);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLatestRideData();
+    setSelectedSeats([]);
+    setIsProcessing(false);
+
+    // Listen for seat updates from other users
+    socket.on("seatsUpdated", (updatedOccupiedSeats) => {
+      console.log("📡 Received seat update:", updatedOccupiedSeats);
+      setLiveOccupiedSeats(updatedOccupiedSeats);
+
+      // Deselect any seat the user was holding if someone else just booked it
+      setSelectedSeats((prev) => {
+        const stillAvailable = prev.filter(
+          (id) => !updatedOccupiedSeats.includes(id),
+        );
+
+        // Notify user if their selection was taken
+        if (stillAvailable.length < prev.length) {
+          showNotification({
+            type: "warning",
+            title: "Seats Unavailable",
+            message: "Some selected seats were just booked by another user",
+          });
+        }
+
+        return stillAvailable;
       });
+    });
+
+    // Cleanup
+    return () => {
+      if (socket) {
+        socket.emit("leaveRideRoom", selectedRide._id);
+        socket.disconnect();
+      }
+      // Clear any pending payment timeout
+      if (paymentTimeoutRef.current) {
+        clearTimeout(paymentTimeoutRef.current);
+      }
+    };
+  }, [isModalOpen, selectedRide]);
+
+  if (!isModalOpen || !selectedRide) return null;
+
+  const ridePrice = selectedRide.price || 0;
+  const totalAmount = ridePrice * selectedSeats.length;
+
+  const config = {
+    reference: `TRX-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
+    email: tripData?.userEmail || tripData?.email || "customer@example.com",
+    amount: totalAmount * 100,
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_KEY,
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const handleMarkSeatsAsTaken = async (reference) => {
+    console.log("💳 Processing payment reference:", reference);
+    console.log("🎫 Booking seats:", selectedSeats);
+    console.log("🚗 Ride ID:", selectedRide._id);
+
+    try {
+      const { data } = await api.patch(`/rides/${selectedRide._id}/book`, {
+        seatNumbers: selectedSeats,
+        paymentReference: reference,
+      });
+
+      console.log("✅ Backend response:", data);
+
+      if (data.success) {
+        showNotification({
+          type: "success",
+          title: "Booking Confirmed",
+          message: `Successfully booked ${selectedSeats.length} seat(s). Safe trip!`,
+        });
+
+        // ✅ Notify parent to refresh ride list
+        if (onBookingSuccess) {
+          onBookingSuccess(data.ride);
+        }
+
+        setSelectedSeats([]);
+        closeModal();
+      } else {
+        console.error("❌ Booking failed - success: false in response");
+        throw new Error("Booking failed");
+      }
+    } catch (error) {
+      console.error("🔥 Booking error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        fullError: error,
+      });
+
+      const errorMsg = error.response?.data?.message || "Something went wrong";
+
+      showNotification({
+        type: "error",
+        title: "Booking Failed",
+        message:
+          errorMsg === "Seats unavailable or already booked"
+            ? "These seats were just taken. Please select different seats."
+            : errorMsg,
+      });
+
+      // Clear selections on booking failure
+      if (error.response?.status === 400) {
+        setSelectedSeats([]);
+      }
+    } finally {
+      setIsProcessing(false);
     }
-  }, [selectedSeats]);
+  };
 
-  // Mock occupied seats
-  const occupiedSeats = [2, 5, 11];
+  const handlePaymentAction = () => {
+    if (selectedSeats.length === 0) return;
 
-  const toggleSeat = (seatId) => {
-    if (occupiedSeats.includes(seatId)) return;
-    setSelectedSeats((prev) =>
-      prev.includes(seatId)
-        ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId]
+    // Check connection before proceeding
+    if (!isConnected) {
+      showNotification({
+        type: "error",
+        title: "Connection Lost",
+        message: "Please check your internet connection and try again",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Clear any existing timeout
+    if (paymentTimeoutRef.current) {
+      clearTimeout(paymentTimeoutRef.current);
+    }
+
+    // Safety timeout - reset if payment doesn't complete in 5 minutes
+    paymentTimeoutRef.current = setTimeout(() => {
+      console.log("⏰ Payment timeout - resetting state");
+      setIsProcessing(false);
+      showNotification({
+        type: "warning",
+        title: "Payment Timeout",
+        message: "Payment window was open too long. Please try again.",
+      });
+    }, 300000); // 5 minutes
+
+    // Backup: Also reset after 3 seconds of Paystack iframe being closed
+    // This catches cases where onClose doesn't fire
+    const checkPaystackClosed = setInterval(() => {
+      const paystackIframe = document.querySelector('iframe[src*="paystack"]');
+      if (!paystackIframe && isProcessing) {
+        console.log("🔍 Detected Paystack closed without callback");
+        clearInterval(checkPaystackClosed);
+        clearTimeout(paymentTimeoutRef.current);
+        setIsProcessing(false);
+      }
+    }, 500);
+
+    initializePayment(
+      // Success callback
+      (reference) => {
+        clearInterval(checkPaystackClosed);
+        clearTimeout(paymentTimeoutRef.current);
+        console.log("✅ Payment successful:", reference);
+        handleMarkSeatsAsTaken(reference.reference);
+      },
+      // Close/Cancel callback
+      () => {
+        clearInterval(checkPaystackClosed);
+        clearTimeout(paymentTimeoutRef.current);
+        console.log("❌ Payment cancelled or closed");
+        setIsProcessing(false);
+        showNotification({
+          type: "info",
+          title: "Payment Cancelled",
+          message:
+            "You closed the payment window. Your seats are still available.",
+        });
+      },
     );
   };
 
-  // Dynamic Seat Configuration Logic
-  const renderSeats = () => {
-    const type = tripData?.selectedVehicle?.toLowerCase() || "car";
-    let config = { front: 1, rows: 1, cols: 3 };
+  const toggleSeat = (seatId) => {
+    // Prevent selection if processing or seat is occupied
+    if (liveOccupiedSeats.includes(seatId) || isProcessing) return;
 
-    if (type === "sienna") {
-      config = { front: 1, rows: 2, cols: 3 };
-    } else if (type === "bus") {
-      config = { front: 2, rows: 3, cols: 4 };
-    }
+    setSelectedSeats((prev) =>
+      prev.includes(seatId)
+        ? prev.filter((id) => id !== seatId)
+        : [...prev, seatId],
+    );
+  };
+
+  const renderSeats = () => {
+    const type = selectedRide.vehicleType?.toLowerCase() || "car";
+    const vConfig = {
+      bus: { front: 2, rows: 3, cols: 4, total: 14 },
+      sienna: { front: 1, rows: 2, cols: 3, total: 7 },
+      car: { front: 1, rows: 1, cols: 3, total: 4 },
+    }[type];
 
     const seatUI = (id, label) => {
-      const isOccupied = occupiedSeats.includes(id);
+      const isOccupied = liveOccupiedSeats.includes(id);
       const isSelected = selectedSeats.includes(id);
+
       return (
         <button
           key={id}
-          disabled={isOccupied}
+          type="button"
+          disabled={isOccupied || isProcessing}
           onClick={() => toggleSeat(id)}
-          className={`relative py-3 rounded-lg flex flex-col items-center justify-center transition-all duration-200
+          className={`relative py-3 rounded-lg flex flex-col items-center justify-center transition-all duration-300
             ${
               isOccupied
-                ? "bg-gray-800 text-gray-600 cursor-not-allowed"
+                ? "bg-gray-800 text-gray-600 cursor-not-allowed border-transparent"
                 : isSelected
-                ? "bg-orange-500 text-white scale-110 shadow-lg shadow-orange-500/20"
-                : "bg-gray-700/50 text-gray-300 hover:bg-gray-600 border border-white/5"
+                  ? "bg-orange-500 text-white scale-110 shadow-lg shadow-orange-500/30 border-orange-400"
+                  : "bg-gray-700/50 text-gray-300 hover:bg-gray-600 border-white/5 border hover:border-orange-500/50"
             }`}
         >
-          <Armchair size={18} className={isSelected ? "animate-bounce" : ""} />
-          <span className="text-[10px] mt-1 font-bold">{label || id}</span>
+          <Armchair size={18} className={isSelected ? "animate-pulse" : ""} />
+          <span className="text-[10px] mt-1 font-bold">
+            {label || `S${id}`}
+          </span>
         </button>
       );
     };
 
     return (
       <div className="space-y-8">
-        {/* Front Row: Driver + Passenger Seats (Dynamic) */}
         <div className="grid grid-cols-3 gap-3 items-end px-2">
-          <div className="p-2 bg-gray-800/30 rounded-lg text-gray-600 flex flex-col items-center">
-            <div className="w-8 h-8 border-2 border-gray-700 rounded-full flex items-center justify-center mb-1">
-              <div className="w-1 h-4 bg-gray-700 rounded-full rotate-45" />
+          <div className="flex flex-col items-center opacity-30 grayscale">
+            <div className="w-8 h-8 border-2 border-white rounded-full mb-1 flex items-center justify-center">
+              <div className="w-1 h-3 bg-white rounded-full" />
             </div>
-            <span className="text-[8px] uppercase font-bold text-center">
-              Driver
-            </span>
+            <span className="text-[7px] uppercase font-black">Driver</span>
           </div>
-
-          {config.front === 2 ? (
+          {vConfig.front === 2 ? (
             <>
               {seatUI(1, "F1")}
               {seatUI(2, "F2")}
@@ -85,15 +327,11 @@ const BookingsPopup = ({ isModalOpen, selectedRide, closeModal, tripData }) => {
             </>
           )}
         </div>
-
-        {/* Main Cabin Rows */}
         <div
-          className={`grid gap-3 ${
-            config.cols === 4 ? "grid-cols-4" : "grid-cols-3"
-          }`}
+          className={`grid gap-3 ${vConfig.cols === 4 ? "grid-cols-4" : "grid-cols-3"}`}
         >
-          {[...Array(config.rows * config.cols)].map((_, i) =>
-            seatUI(i + (config.front + 1))
+          {Array.from({ length: vConfig.total - vConfig.front }).map((_, i) =>
+            seatUI(i + vConfig.front + 1),
           )}
         </div>
       </div>
@@ -101,102 +339,139 @@ const BookingsPopup = ({ isModalOpen, selectedRide, closeModal, tripData }) => {
   };
 
   return (
-    <>
-      {isModalOpen && selectedRide && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999999] flex items-center justify-center p-4 animate-fade-in"
-          onClick={closeModal}
-        >
-          <div
-            ref={scrollContainerRef}
-            className="bg-[#1C1C1E] rounded-3xl text-white max-w-2xl w-full relative border border-gray-800 shadow-2xl animate-scale-in no_scrollbar overflow-y-auto max-h-[95vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div
-              className="relative h-40 bg-cover bg-center"
-              style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(28, 28, 30, 1)), url(${selectedRide.image})`,
-              }}
-            >
-              <button
-                onClick={closeModal}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition bg-black/50 rounded-full p-2"
-              >
-                <X size={24} />
-              </button>
-              <div className="absolute bottom-4 left-6">
-                <h2 className="text-2xl font-black text-white">
-                  {selectedRide.park}
-                </h2>
-                <p className="text-gray-400 text-sm uppercase tracking-wider font-bold">
-                  {tripData?.selectedVehicle || "Vehicle"} •{" "}
-                  {selectedRide.destination}
-                </p>
-              </div>
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
+      onClick={closeModal}
+    >
+      <div
+        ref={scrollContainerRef}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#1C1C1E] rounded-[2.5rem] text-white max-w-xl w-full relative border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] no_scrollbar"
+      >
+        {/* Connection Status Indicator */}
+        <div className="absolute top-4 left-4 z-10">
+          {isConnected ? (
+            <div className="flex items-center gap-1 bg-green-500/20 px-2 py-1 rounded-full">
+              <Wifi size={12} className="text-green-500" />
+              <span className="text-[8px] text-green-500 font-bold">LIVE</span>
             </div>
+          ) : (
+            <div className="flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded-full">
+              <WifiOff size={12} className="text-red-500" />
+              <span className="text-[8px] text-red-500 font-bold">OFFLINE</span>
+            </div>
+          )}
+        </div>
 
-            <div className="p-6 space-y-6">
-              {/* SEAT SELECTION AREA */}
-              <div className="bg-black/20 rounded-2xl p-6 border border-gray-800">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-bold text-lg">Select Seats</h3>
-                  <div className="flex gap-4 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-gray-700 rounded-sm" /> Sold
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 bg-orange-500 rounded-sm" />{" "}
-                      Selected
-                    </div>
-                  </div>
-                </div>
+        <div
+          className="relative h-44 bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), #1C1C1E), url(${selectedRide.image || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=2069"})`,
+          }}
+        >
+          <button
+            onClick={closeModal}
+            className="absolute top-6 right-6 p-2 bg-black/40 hover:bg-black/60 rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
+          <div className="absolute bottom-4 left-8">
+            <h2 className="text-3xl font-black">{selectedRide.park}</h2>
+            <p className="text-orange-500 text-xs font-black uppercase tracking-widest">
+              {selectedRide.destination}
+            </p>
+          </div>
+        </div>
 
-                <div className="max-w-[300px] mx-auto border-x-4 border-t-[40px] border-b-8 border-gray-800 rounded-t-[60px] rounded-b-[30px] p-6 relative bg-[#151517] shadow-2xl">
+        <div className="p-8 space-y-8">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+            </div>
+          ) : (
+            <>
+              <div className="bg-black/40 rounded-[2rem] p-8 border border-white/5">
+                <div className="max-w-[260px] mx-auto border-x-4 border-t-[35px] border-[#2C2C2E] rounded-t-[60px] rounded-b-3xl p-6 bg-[#0A0A0B]">
                   {renderSeats()}
                 </div>
               </div>
 
-              {/* Trip Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
-                  <p className="text-xs text-gray-400">Total Price</p>
-                  <p className="text-xl font-black text-[#FFC107]">
-                    ₦
-                    {(
-                      parseInt(selectedRide.price.replace(/\D/g, "")) *
-                      (selectedSeats.length || 0)
-                    ).toLocaleString()}
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-4 text-[10px]">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-gray-700/50 rounded border border-white/5" />
+                  <span className="text-gray-400">Available</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-orange-500 rounded" />
+                  <span className="text-gray-400">Selected</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-gray-800 rounded" />
+                  <span className="text-gray-400">Taken</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase">
+                    Subtotal
+                  </span>
+                  <p className="text-xl font-black text-orange-500">
+                    ₦{totalAmount.toLocaleString()}
                   </p>
                 </div>
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                  <p className="text-xs text-gray-400">Seats Selected</p>
-                  <p className="text-xl font-bold text-white">
-                    {selectedSeats.length > 0
-                      ? selectedSeats.join(", ")
-                      : "None"}
+                <div className="flex-1 bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase">
+                    Seats
+                  </span>
+                  <p className="text-xl font-bold">
+                    {selectedSeats.length || "0"}
                   </p>
                 </div>
               </div>
 
               <button
-                disabled={selectedSeats.length === 0}
-                className={`w-full py-4 rounded-xl font-bold transition-all shadow-lg 
-                  ${
-                    selectedSeats.length > 0
-                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-[1.02] active:scale-95"
-                      : "bg-gray-700 text-gray-500 cursor-not-allowed"
-                  }`}
+                onClick={handlePaymentAction}
+                disabled={
+                  selectedSeats.length === 0 || isProcessing || !isConnected
+                }
+                className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${
+                  selectedSeats.length > 0 && !isProcessing && isConnected
+                    ? "bg-orange-500 hover:bg-orange-600 text-white shadow-xl shadow-orange-500/20 active:scale-95"
+                    : "bg-gray-800 text-gray-600 cursor-not-allowed"
+                }`}
               >
-                {selectedSeats.length > 0
-                  ? `Confirm ${selectedSeats.length} Seats`
-                  : "Select a Seat"}
+                {!isConnected
+                  ? "Connection Lost..."
+                  : isProcessing
+                    ? "Finalizing Booking..."
+                    : selectedSeats.length > 0
+                      ? `Pay ₦${totalAmount.toLocaleString()}`
+                      : "Select a Seat"}
               </button>
-            </div>
-          </div>
+
+              {/* Emergency Cancel Button - only shows if stuck in processing */}
+              {isProcessing && (
+                <button
+                  onClick={() => {
+                    setIsProcessing(false);
+                    showNotification({
+                      type: "info",
+                      title: "Cancelled",
+                      message: "Booking process cancelled. You can try again.",
+                    });
+                  }}
+                  className="w-full py-3 rounded-xl font-bold text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+                >
+                  Cancel & Reset
+                </button>
+              )}
+            </>
+          )}
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 

@@ -86,7 +86,6 @@ export default function TripPlanner() {
           vehicleType: selectedVehicle,
         },
       });
-      console.log("API Response:", response.data);
 
       if (response.data.rides.length === 0) {
         console.warn("Server found 0 matches in DB");
