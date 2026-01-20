@@ -1,158 +1,124 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Download,
   Bus,
   Calendar,
   Clock,
   MapPin,
-  User,
-  X,
-  Eye,
   AlertCircle,
   Navigation,
 } from "lucide-react";
-import { ride_details } from "@/constants";
+import { api } from "@/utils/axios";
 import Ticket from "./Ticket";
-import { useRouter } from "next/navigation";
 
 const TravelDetails = () => {
   const [filter, setFilter] = useState("all");
   const [selectedRide, setSelectedRide] = useState(null);
-  const router = useRouter();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredRides =
-    filter === "all"
-      ? ride_details
-      : ride_details.filter((ride) => ride.status === filter);
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/rides/my-bookings?status=${filter}`);
+      if (data.success) setBookings(data.bookings);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [filter]);
 
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
-        return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
       case "ongoing":
-        return "bg-orange-500/10 text-orange-400 border border-orange-500/20";
+        return "bg-orange-500/10 text-orange-400 border-orange-500/20";
       case "pending":
-        return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
       default:
-        return "bg-slate-500/10 text-slate-400 border border-slate-500/20";
+        return "bg-slate-500/10 text-slate-400 border-slate-500/20";
     }
   };
 
-  const getStatusCount = (status) => {
-    if (status === "all") return ride_details.length;
-    return ride_details.filter((ride) => ride.status === status).length;
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black text-white p-4">
       <div className="mx-auto">
-        {/* Filter Buttons */}
-        <div className="flex sticky top-16 bg-black py-4 z-50 no_scrollbar overflow-scroll gap-3 mb-6 mt-4">
+        {/* Filter Header */}
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 no_scrollbar">
           {["all", "completed", "ongoing", "pending"].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-6 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
+              className={`px-6 py-2 rounded-xl border transition-all ${
                 filter === status
-                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
-                  : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                  ? "bg-orange-600 border-orange-500"
+                  : "bg-slate-900 border-slate-800 text-slate-400"
               }`}
             >
-              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  filter === status
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-700 text-slate-400"
-                }`}
-              >
-                {getStatusCount(status)}
-              </span>
+              <span className="capitalize">{status}</span>
             </button>
           ))}
         </div>
 
-        {/* Table Container */}
-        <div className="overflow-hidden">
-          {filteredRides.length > 0 ? (
+        {/* Table UI */}
+        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden">
+          {loading ? (
+            <div className="p-20 text-center animate-pulse text-slate-500">
+              Loading trips...
+            </div>
+          ) : bookings.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-slate-800 border-b border-slate-700">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Booking Ref
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Route
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Date
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Departure
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Seat
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Price
-                    </th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-300">
-                      Status
-                    </th>
+                  <tr className="border-b border-slate-800 text-slate-400 text-sm">
+                    <th className="p-6">Booking Ref</th>
+                    <th className="p-6">Route</th>
+                    <th className="p-6">Departure</th>
+                    <th className="p-6">Seats</th>
+                    <th className="p-6">Amount</th>
+                    <th className="p-6">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRides.map((ride, index) => (
+                  {bookings.map((b) => (
                     <tr
-                      key={ride.id}
-                      className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${
-                        index % 2 === 0 ? "bg-slate-900" : "bg-slate-900/50"
-                      }`}
-                      onClick={() => setSelectedRide(ride)}
+                      key={b._id}
+                      onClick={() => setSelectedRide(b)}
+                      className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors cursor-pointer"
                     >
-                      <td className="py-4 px-6 text-slate-300 font-mono text-sm">
-                        {ride.bookingRef}
+                      <td className="p-6 font-mono text-orange-500">
+                        {b.bookingRef}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-semibold">
-                            {ride.terminal}
-                          </span>
-                          <span className="text-orange-400">→</span>
-                          <span className="text-white font-semibold">
-                            {ride.destination}
-                          </span>
-                          {ride.status === "ongoing" && (
-                            <div
-                              className="ml-2 flex items-center justify-center animate-pulse bg-orange-500/20 p-1.5 rounded-full"
-                              title="Track Live"
-                            >
-                              <Navigation
-                                size={14}
-                                className="text-orange-400 fill-orange-400"
-                              />
-                            </div>
-                          )}
+                      <td className="p-6">
+                        <div className="font-bold">
+                          {b.ride?.origin} → {b.ride?.destination}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {b.ride?.park}
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-slate-300">{ride.date}</td>
-                      <td className="py-4 px-6 text-slate-300">
-                        {ride.departure}
+                      <td className="p-6 text-sm text-slate-300">
+                        {new Date(b.ride?.departureTime).toLocaleDateString()}
                       </td>
-                      <td className="py-4 px-6 text-slate-300">{ride.seat}</td>
-                      <td className="py-4 px-6 text-white font-semibold">
-                        ₦{ride.price}
+                      <td className="p-6 text-slate-300">
+                        {b.seatNumbers.join(", ")}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="p-6 font-bold">
+                        ₦{b.amountPaid?.toLocaleString()}
+                      </td>
+                      <td className="p-6">
                         <span
-                          className={`px-3 py-1 rounded-md text-xs font-semibold ${getStatusColor(
-                            ride.status
-                          )}`}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${getStatusColor(b.status)}`}
                         >
-                          {ride.status}
+                          {b.status}
                         </span>
                       </td>
                     </tr>
@@ -161,23 +127,22 @@ const TravelDetails = () => {
               </table>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                <AlertCircle size={32} className="text-slate-500" />
-              </div>
-              <p className="text-slate-400 max-w-xs mb-6">
-                There are no trips matching the "{filter}" status at the moment.
-              </p>
-              <button className="btn_one">Start Booking</button>
+            <div className="py-20 flex flex-col items-center text-slate-500">
+              <AlertCircle size={48} className="mb-4 opacity-20" />
+              <p>No bookings found for "{filter}" status.</p>
             </div>
           )}
         </div>
       </div>
-      <Ticket
-        selectedRide={selectedRide}
-        getStatusColor={getStatusColor}
-        setSelectedRide={setSelectedRide}
-      />
+
+      {/* Ticket Modal */}
+      {selectedRide && (
+        <Ticket
+          selectedRide={selectedRide}
+          setSelectedRide={setSelectedRide}
+          getStatusColor={getStatusColor}
+        />
+      )}
     </div>
   );
 };

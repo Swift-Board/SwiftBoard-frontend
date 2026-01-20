@@ -42,7 +42,7 @@ const page = () => {
   return (
     <main className="layout">
       {/* Header section (Sticky) */}
-      <span className="flex items-center text-gray-400 justify-between flex-wrap gap-2 sticky top-16 bg-black py-4 z-[9999]">
+      <span className="flex items-center text-gray-400 justify-between flex-wrap gap-2 sticky top-16 bg-black py-4 z-[99]">
         <h1 className="text-3xl font-black text-white">Bookings</h1>
         <h5 className="place-self-end flex items-center gap-2">
           <Navigation size={18} className="text-teal-400" /> {tripData.location}{" "}
