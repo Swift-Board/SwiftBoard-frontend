@@ -13,7 +13,6 @@ import React from "react";
 const Ticket = ({ selectedRide, getStatusColor, setSelectedRide }) => {
   if (!selectedRide) return null;
 
-  // Helper to extract data safely since selectedRide is now a 'Booking' object
   const bookingData = {
     ref: selectedRide.bookingRef,
     origin: selectedRide.ride?.origin || "N/A",
