@@ -18,6 +18,17 @@ const Login = () => {
   const { login } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "expired") {
+      showNotification({
+        type: "error",
+        message: "Session expired. Please log in to continue.",
+        duration: 5000,
+      });
+    }
+  }, [showNotification]);
+
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: Yup.object({
