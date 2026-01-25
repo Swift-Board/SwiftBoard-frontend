@@ -1,6 +1,10 @@
 import { MapPin, Clock, Users, CircleAlert } from "lucide-react";
 import React, { useState } from "react";
-import BookingsPopup from "./BookingsPopup";
+import dynamic from "next/dynamic";
+const BookingsPopup = dynamic(() => import("./BookingsPopup"), {
+  ssr: false,
+  loading: () => <p>Loading Booking System...</p>,
+});
 import { useRouter } from "next/navigation";
 
 const AvailableParks = ({ tripData, rides = [], onRefreshRides }) => {

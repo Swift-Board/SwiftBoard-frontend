@@ -2,10 +2,33 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { X, Armchair, Wifi, WifiOff } from "lucide-react";
-import { usePaystackPayment } from "react-paystack";
 import { io } from "socket.io-client";
 import { useNotification } from "../Notification";
-import { api } from "@/utils/axios";
+import { api, apiAuth } from "@/utils/axios";
+
+// Dynamically load Paystack script
+const usePaystackScript = () => {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (window.PaystackPop) {
+      setLoaded(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    script.async = true;
+    script.onload = () => setLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, []);
+
+  return loaded;
+};
 
 const BookingsPopup = ({
   isModalOpen,
@@ -23,6 +46,7 @@ const BookingsPopup = ({
   const scrollContainerRef = useRef(null);
   const paymentTimeoutRef = useRef(null);
   const { showNotification } = useNotification();
+  const paystackLoaded = usePaystackScript();
 
   // --- Real-time Socket Listener ---
   useEffect(() => {
@@ -120,19 +144,22 @@ const BookingsPopup = ({
     };
   }, [isModalOpen, selectedRide]);
 
-  if (!isModalOpen || !selectedRide) return null;
-
-  const ridePrice = selectedRide.price || 0;
+  const ridePrice = selectedRide?.price || 0;
   const totalAmount = ridePrice * selectedSeats.length;
 
-  const config = {
-    reference: `TRX-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
-    email: tripData?.userEmail || tripData?.email || "customer@example.com",
-    amount: totalAmount * 100,
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_KEY,
-  };
+  if (!isModalOpen || !selectedRide) return null;
 
-  const initializePayment = usePaystackPayment(config);
+  // Get user email from localStorage
+  let userEmail = "customer@example.com";
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      userEmail = user.email || userEmail;
+    }
+  } catch (error) {
+    console.error("Failed to get user email from localStorage:", error);
+  }
 
   const handleMarkSeatsAsTaken = async (reference) => {
     console.log("💳 Processing payment reference:", reference);
@@ -140,11 +167,24 @@ const BookingsPopup = ({
     console.log("🚗 Ride ID:", selectedRide._id);
 
     try {
-      const { data } = await api.patch(`/rides/${selectedRide._id}/book`, {
-        seatNumbers: selectedSeats,
-        paymentReference: reference,
-      });
+      // Add request timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log("⏰ Request timeout - aborting");
+      }, 30000); // 30 second timeout
 
+      // 🔥 CRITICAL FIX: Use apiAuth instead of api for authenticated requests
+      const { data } = await apiAuth.patch(
+        `/rides/${selectedRide._id}/book`,
+        {
+          seatNumbers: selectedSeats,
+          paymentReference: reference,
+        },
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timeoutId);
       console.log("✅ Backend response:", data);
 
       if (data.success) {
@@ -163,7 +203,7 @@ const BookingsPopup = ({
         closeModal();
       } else {
         console.error("❌ Booking failed - success: false in response");
-        throw new Error("Booking failed");
+        throw new Error(data.message || "Booking failed");
       }
     } catch (error) {
       console.error("🔥 Booking error details:", {
@@ -173,15 +213,27 @@ const BookingsPopup = ({
         fullError: error,
       });
 
-      const errorMsg = error.response?.data?.message || "Something went wrong";
+      // Log the full response data for debugging
+      if (error.response?.data) {
+        console.error("📋 Backend error message:", error.response.data.message);
+        console.error("📋 Full backend response:", error.response.data);
+      }
+
+      let errorMsg = "Something went wrong. Please try again.";
+
+      if (error.name === "AbortError") {
+        errorMsg =
+          "Request timed out. Please check your connection and try again.";
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
 
       showNotification({
         type: "error",
         title: "Booking Failed",
-        message:
-          errorMsg === "Seats unavailable or already booked"
-            ? "These seats were just taken. Please select different seats."
-            : errorMsg,
+        message: errorMsg,
       });
 
       // Clear selections on booking failure
@@ -189,15 +241,25 @@ const BookingsPopup = ({
         setSelectedSeats([]);
       }
     } finally {
+      // 🔥 CRITICAL: Always reset processing state
+      console.log("🔄 Resetting processing state");
       setIsProcessing(false);
+
+      if (paymentTimeoutRef.current) {
+        clearTimeout(paymentTimeoutRef.current);
+      }
     }
   };
 
-  const handlePaymentAction = () => {
-    if (selectedSeats.length === 0) return;
+  const handlePaymentAction = async () => {
+    if (selectedSeats.length === 0) {
+      console.log("⚠️ No seats selected");
+      return;
+    }
 
     // Check connection before proceeding
     if (!isConnected) {
+      console.log("⚠️ Not connected");
       showNotification({
         type: "error",
         title: "Connection Lost",
@@ -206,6 +268,63 @@ const BookingsPopup = ({
       return;
     }
 
+    // Check if Paystack is loaded
+    if (!paystackLoaded || !window.PaystackPop) {
+      console.log("⚠️ Paystack not loaded yet");
+      showNotification({
+        type: "error",
+        title: "Payment Error",
+        message: "Payment system is loading. Please try again in a moment.",
+      });
+      return;
+    }
+
+    // 🔥 CRITICAL: Verify seats are still available before payment
+    console.log("🔍 Verifying seat availability before payment...");
+    try {
+      const { data } = await api.get(`/rides/${selectedRide._id}`);
+      if (data.success && data.ride) {
+        const currentlyOccupied = data.ride.occupiedSeats || [];
+        const conflictingSeats = selectedSeats.filter((seat) =>
+          currentlyOccupied.includes(seat),
+        );
+
+        if (conflictingSeats.length > 0) {
+          console.log("❌ Seats no longer available:", conflictingSeats);
+          setLiveOccupiedSeats(currentlyOccupied);
+          setSelectedSeats([]);
+
+          showNotification({
+            type: "error",
+            title: "Seats Unavailable",
+            message: `Seat(s) ${conflictingSeats.join(", ")} were just booked. Please select different seats.`,
+          });
+          return;
+        }
+        console.log("✅ All selected seats are available");
+      }
+    } catch (error) {
+      console.error("Failed to verify seat availability:", error);
+      showNotification({
+        type: "error",
+        title: "Verification Failed",
+        message: "Unable to verify seat availability. Please try again.",
+      });
+      return;
+    }
+
+    const reference = `TRX-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
+    console.log("🚀 Starting payment process...");
+    console.log("💰 Total amount:", totalAmount);
+    console.log("🎫 Selected seats:", selectedSeats);
+    console.log("📧 Email:", userEmail);
+    console.log(
+      "🔑 Paystack key exists:",
+      !!process.env.NEXT_PUBLIC_PAYSTACK_KEY,
+    );
+    console.log("📝 Payment reference:", reference);
+
     setIsProcessing(true);
 
     // Clear any existing timeout
@@ -213,51 +332,61 @@ const BookingsPopup = ({
       clearTimeout(paymentTimeoutRef.current);
     }
 
-    // Safety timeout - reset if payment doesn't complete in 5 minutes
+    // Reduced timeout to 2 minutes for better UX
     paymentTimeoutRef.current = setTimeout(() => {
-      console.log("⏰ Payment timeout - resetting state");
+      console.log("⏰ Payment timeout (2min) - resetting state");
       setIsProcessing(false);
       showNotification({
         type: "warning",
         title: "Payment Timeout",
         message: "Payment window was open too long. Please try again.",
       });
-    }, 300000); // 5 minutes
+    }, 120000); // 2 minutes
 
-    // Backup: Also reset after 3 seconds of Paystack iframe being closed
-    // This catches cases where onClose doesn't fire
-    const checkPaystackClosed = setInterval(() => {
-      const paystackIframe = document.querySelector('iframe[src*="paystack"]');
-      if (!paystackIframe && isProcessing) {
-        console.log("🔍 Detected Paystack closed without callback");
-        clearInterval(checkPaystackClosed);
-        clearTimeout(paymentTimeoutRef.current);
-        setIsProcessing(false);
-      }
-    }, 500);
+    console.log("🎬 Initializing Paystack popup...");
 
-    initializePayment(
-      // Success callback
-      (reference) => {
-        clearInterval(checkPaystackClosed);
-        clearTimeout(paymentTimeoutRef.current);
-        console.log("✅ Payment successful:", reference);
-        handleMarkSeatsAsTaken(reference.reference);
-      },
-      // Close/Cancel callback
-      () => {
-        clearInterval(checkPaystackClosed);
-        clearTimeout(paymentTimeoutRef.current);
-        console.log("❌ Payment cancelled or closed");
-        setIsProcessing(false);
-        showNotification({
-          type: "info",
-          title: "Payment Cancelled",
-          message:
-            "You closed the payment window. Your seats are still available.",
-        });
-      },
-    );
+    try {
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_KEY,
+        email: userEmail,
+        amount: totalAmount * 100,
+        ref: reference,
+        currency: "NGN",
+        onClose: function () {
+          console.log("❌❌❌ PAYSTACK WINDOW CLOSED!");
+          clearTimeout(paymentTimeoutRef.current);
+          setIsProcessing(false);
+
+          showNotification({
+            type: "info",
+            title: "Payment Cancelled",
+            message:
+              "You closed the payment window. Your seats are still available.",
+          });
+        },
+        callback: function (response) {
+          console.log("✅✅✅ PAYSTACK SUCCESS!");
+          console.log("📝 Response:", response);
+
+          clearTimeout(paymentTimeoutRef.current);
+          handleMarkSeatsAsTaken(response.reference);
+        },
+      });
+
+      console.log("🎬 Opening Paystack iframe...");
+      handler.openIframe();
+      console.log("✅ Paystack popup opened");
+    } catch (error) {
+      console.error("🔥 Error initializing Paystack:", error);
+      setIsProcessing(false);
+      clearTimeout(paymentTimeoutRef.current);
+
+      showNotification({
+        type: "error",
+        title: "Payment Error",
+        message: "Failed to initialize payment. Please try again.",
+      });
+    }
   };
 
   const toggleSeat = (seatId) => {
@@ -445,7 +574,7 @@ const BookingsPopup = ({
                 {!isConnected
                   ? "Connection Lost..."
                   : isProcessing
-                    ? "Finalizing Booking..."
+                    ? "Processing Payment..."
                     : selectedSeats.length > 0
                       ? `Pay ₦${totalAmount.toLocaleString()}`
                       : "Select a Seat"}
@@ -456,6 +585,9 @@ const BookingsPopup = ({
                 <button
                   onClick={() => {
                     setIsProcessing(false);
+                    if (paymentTimeoutRef.current) {
+                      clearTimeout(paymentTimeoutRef.current);
+                    }
                     showNotification({
                       type: "info",
                       title: "Cancelled",
