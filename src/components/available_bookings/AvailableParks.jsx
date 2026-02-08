@@ -13,7 +13,6 @@ const AvailableParks = ({ tripData, rides = [], onRefreshRides }) => {
   const [localRides, setLocalRides] = useState(rides);
   const router = useRouter();
 
-  // Update local rides when prop changes
   React.useEffect(() => {
     setLocalRides(rides);
   }, [rides]);
