@@ -30,7 +30,6 @@ apiAuth.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response Interceptor: Watch for 401 errors on apiAuth
 apiAuth.interceptors.response.use(
   (response) => response,
   (error) => {
