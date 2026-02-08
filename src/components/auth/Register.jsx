@@ -4,7 +4,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { EyeSlashIcon, EyeIcon } from "@phosphor-icons/react/dist/ssr";
+import { EyeSlashIcon, EyeIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/utils/axios";
