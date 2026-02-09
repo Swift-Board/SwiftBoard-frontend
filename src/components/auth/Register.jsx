@@ -9,12 +9,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/utils/axios";
 import { useNotification } from "@/components/Notification";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
   const { showNotification } = useNotification();
+  const { login } = useAuth();
 
   const togglePassword = () => setShowPassword((prev) => !prev);
   const toggleConfirm = () => setShowConfirm((prev) => !prev);
@@ -43,8 +45,8 @@ const Register = () => {
         const response = await api.post("/auth/register", values);
 
         if (response.data.success) {
-          localStorage.setItem("token", response.data.token);
-          localStorage.setItem("user", JSON.stringify(response.data.user));
+          // Update AuthContext state immediately
+          login(response.data.user, response.data.token);
 
           // Show success notification
           showNotification({
@@ -57,7 +59,6 @@ const Register = () => {
 
           setTimeout(() => {
             router.push("/");
-            router.refresh();
           }, 1500);
         }
       } catch (error) {
