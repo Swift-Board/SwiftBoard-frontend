@@ -5,6 +5,7 @@ import { X, Armchair, Wifi, WifiOff } from "lucide-react";
 import { io } from "socket.io-client";
 import { useNotification } from "../Notification";
 import { api, apiAuth } from "@/utils/axios";
+import { useRouter } from "next/navigation";
 
 // Dynamically load Paystack script
 const usePaystackScript = () => {
@@ -47,6 +48,7 @@ const BookingsPopup = ({
   const paymentTimeoutRef = useRef(null);
   const { showNotification } = useNotification();
   const paystackLoaded = usePaystackScript();
+  const router = useRouter()
 
   // --- Real-time Socket Listener ---
   useEffect(() => {
@@ -200,6 +202,7 @@ const BookingsPopup = ({
         }
 
         setSelectedSeats([]);
+        router.push("/profile/travels")
         closeModal();
       } else {
         console.error("❌ Booking failed - success: false in response");
