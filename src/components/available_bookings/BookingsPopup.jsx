@@ -50,7 +50,6 @@ const BookingsPopup = ({
   const paystackLoaded = usePaystackScript();
   const router = useRouter()
 
-  // --- Real-time Socket Listener ---
   useEffect(() => {
     if (!isModalOpen || !selectedRide) return;
 
@@ -151,7 +150,6 @@ const BookingsPopup = ({
 
   if (!isModalOpen || !selectedRide) return null;
 
-  // Get user email from localStorage
   let userEmail = "customer@example.com";
   try {
     const userStr = localStorage.getItem("user");
